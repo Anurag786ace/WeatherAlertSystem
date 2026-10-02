@@ -367,7 +367,7 @@ export default function Stage6Acknowledgement({
           </div>
 
           <div className="mt-4 pt-3 border-t border-slate-800 text-[10px] font-mono text-slate-400 flex items-center justify-between">
-            <span>Direct MongoDB telemetry binding</span>
+            <span>Direct secure telemetry binding</span>
             <span className="text-emerald-400">Zero packet drops on uplink</span>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   CloudLightning, 
   Search, 
@@ -16,39 +16,44 @@ import {
   RefreshCw,
   Sparkles,
   ShieldCheck,
-  BellRing
+  BellRing,
+  Navigation,
+  Compass,
+  Loader2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useWeather } from '../context/WeatherContext';
 import AnimatedCounter from './AnimatedCounter';
 import { notificationService } from '../utils/notificationService';
+import { ALL_INDIA_CITIES, POPULAR_INDIAN_HUBS } from '../data/indiaCities';
 
-export const INDIAN_LOCATIONS = [
-  { city: 'Bhubaneswar', state: 'Odisha', risk: 'Low', temp: 24, condition: 'Clouds', wind: '10 km/h' },
-  { city: 'Puri', state: 'Odisha', risk: 'Low', temp: 25, condition: 'Clouds', wind: '16 km/h' },
-  { city: 'Cuttack', state: 'Odisha', risk: 'Low', temp: 24, condition: 'Clouds', wind: '11 km/h' },
-  { city: 'Kolkata', state: 'West Bengal', risk: 'Low', temp: 28, condition: 'Clouds', wind: '5 km/h' },
-  { city: 'Patna', state: 'Bihar', risk: 'Moderate', temp: 24, condition: 'Rain', wind: '8 km/h' },
-  { city: 'Jaipur', state: 'Rajasthan', risk: 'Low', temp: 24, condition: 'Clouds', wind: '6 km/h' },
-  { city: 'Chennai', state: 'Tamil Nadu', risk: 'Low', temp: 29, condition: 'Clouds', wind: '11 km/h' },
-  { city: 'Mumbai', state: 'Maharashtra', risk: 'Low', temp: 28, condition: 'Clouds', wind: '13 km/h' },
-  { city: 'Guwahati', state: 'Assam', risk: 'Moderate', temp: 24, condition: 'Rain', wind: '6 km/h' },
-  { city: 'Delhi', state: 'Delhi NCR', risk: 'Low', temp: 23, condition: 'Clouds', wind: '11 km/h' }
-];
+// Export complete Indian locations derived from extensive database
+export const INDIAN_LOCATIONS = ALL_INDIA_CITIES.map(c => ({
+  city: c.city,
+  state: c.state,
+  risk: c.risk,
+  temp: c.defaultTemp || 25,
+  condition: c.defaultCond || 'Clouds',
+  wind: '12 km/h',
+  lat: c.lat,
+  lon: c.lon,
+  region: c.region
+}));
 
 export function getVernacularBadgeText(loc) {
   if (!loc) return 'Odia (ଓଡ଼ିଆ)';
   const s = ((loc.state || '') + ' ' + (loc.city || '')).toLowerCase();
-  if (s.includes('odisha') || s.includes('puri') || s.includes('bhubaneswar') || s.includes('cuttack')) return 'Odia (ଓଡ଼ିଆ)';
-  if (s.includes('bengal') || s.includes('kolkata')) return 'Bengali (বাংলা)';
-  if (s.includes('tamil') || s.includes('chennai')) return 'Tamil (தமிழ்)';
-  if (s.includes('andhra') || s.includes('telangana') || s.includes('hyderabad') || s.includes('visakhapatnam')) return 'Telugu (తెలుగు)';
-  if (s.includes('maharashtra') || s.includes('mumbai') || s.includes('pune')) return 'Marathi (मराठी)';
-  if (s.includes('gujarat') || s.includes('ahmedabad')) return 'Gujarati (ગુજરાતી)';
-  if (s.includes('karnataka') || s.includes('bengaluru')) return 'Kannada (ಕನ್ನಡ)';
-  if (s.includes('kerala') || s.includes('kochi')) return 'Malayalam (മലയാളം)';
-  if (s.includes('assam') || s.includes('guwahati')) return 'Assamese (অসমীয়া)';
-  if (s.includes('punjab') || s.includes('chandigarh')) return 'Punjabi (ਪੰਜਾਬੀ)';
+  if (s.includes('odisha') || s.includes('puri') || s.includes('bhubaneswar') || s.includes('cuttack') || s.includes('rourkela')) return 'Odia (ଓଡ଼ିଆ)';
+  if (s.includes('bengal') || s.includes('kolkata') || s.includes('siliguri') || s.includes('howrah')) return 'Bengali (বাংলা)';
+  if (s.includes('tamil') || s.includes('chennai') || s.includes('coimbatore') || s.includes('madurai')) return 'Tamil (தமிழ்)';
+  if (s.includes('andhra') || s.includes('telangana') || s.includes('hyderabad') || s.includes('visakhapatnam') || s.includes('vijayawada')) return 'Telugu (తెలుగు)';
+  if (s.includes('maharashtra') || s.includes('mumbai') || s.includes('pune') || s.includes('nagpur') || s.includes('nashik')) return 'Marathi (मराठी)';
+  if (s.includes('gujarat') || s.includes('ahmedabad') || s.includes('surat') || s.includes('vadodara') || s.includes('rajkot')) return 'Gujarati (ગુજરાતી)';
+  if (s.includes('karnataka') || s.includes('bengaluru') || s.includes('mysuru') || s.includes('mangalore')) return 'Kannada (ಕನ್ನಡ)';
+  if (s.includes('kerala') || s.includes('kochi') || s.includes('thiruvananthapuram') || s.includes('kozhikode')) return 'Malayalam (മലയാളം)';
+  if (s.includes('assam') || s.includes('guwahati') || s.includes('silchar') || s.includes('dibrugarh')) return 'Assamese (অসমীয়া)';
+  if (s.includes('punjab') || s.includes('chandigarh') || s.includes('amritsar') || s.includes('ludhiana')) return 'Punjabi (ਪੰਜਾਬੀ)';
+  if (s.includes('kashmir') || s.includes('srinagar')) return 'Kashmiri (کٲشُر)';
   return 'Hindi (हिन्दी)';
 }
 
@@ -66,9 +71,19 @@ export default function TopNavbar({
   const { currentUser, isAuthenticated, logout, mongoUri } = useAuth();
   const { current, allCities, liveAlerts, lastUpdated, refresh, loading: weatherLoading } = useWeather();
   
+  // Search state
   const [searchQuery, setSearchQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
+  const [onlineResults, setOnlineResults] = useState([]);
+  const [isSearchingOnline, setIsSearchingOnline] = useState(false);
+  const [isDetectingGPS, setIsDetectingGPS] = useState(false);
+
+  // Dropdown location selector state
   const [locationMenuOpen, setLocationMenuOpen] = useState(false);
+  const [dropdownSearch, setDropdownSearch] = useState('');
+  const [selectedRegion, setSelectedRegion] = useState('All');
+
+  // Other menus
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
@@ -89,30 +104,157 @@ export default function TopNavbar({
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
-  const locationsWithLiveData = INDIAN_LOCATIONS.map(loc => {
-    const liveMatch = (allCities || []).find(c => 
-      c.city.toLowerCase() === loc.city.toLowerCase() ||
-      c.city.toLowerCase().includes(loc.city.toLowerCase()) ||
-      loc.city.toLowerCase().includes(c.city.toLowerCase())
-    );
-    if (liveMatch) {
-      return {
-        ...loc,
-        temp: liveMatch.temp,
-        condition: liveMatch.condition,
-        description: liveMatch.description,
-        risk: liveMatch.riskLevel || loc.risk,
-        wind: `${liveMatch.wind_speed} km/h`,
-        isRealTime: true,
-      };
-    }
-    return loc;
-  });
+  // Merge live telemetry with all Indian locations
+  const locationsWithLiveData = useMemo(() => {
+    return INDIAN_LOCATIONS.map(loc => {
+      const liveMatch = (allCities || []).find(c => 
+        c.city.toLowerCase() === loc.city.toLowerCase() ||
+        c.city.toLowerCase().includes(loc.city.toLowerCase()) ||
+        loc.city.toLowerCase().includes(c.city.toLowerCase())
+      );
+      if (liveMatch) {
+        return {
+          ...loc,
+          temp: liveMatch.temp,
+          condition: liveMatch.condition,
+          description: liveMatch.description,
+          risk: liveMatch.riskLevel || loc.risk,
+          wind: `${liveMatch.wind_speed} km/h`,
+          isRealTime: true,
+        };
+      }
+      return loc;
+    });
+  }, [allCities]);
 
-  const filteredLocations = locationsWithLiveData.filter(loc =>
-    loc.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    loc.state.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter locations for search bar
+  const filteredSearchLocations = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return locationsWithLiveData.slice(0, 15);
+    return locationsWithLiveData.filter(loc =>
+      loc.city.toLowerCase().includes(q) ||
+      loc.state.toLowerCase().includes(q) ||
+      (loc.region && loc.region.toLowerCase().includes(q))
+    );
+  }, [searchQuery, locationsWithLiveData]);
+
+  // Debounced online geocode search for ANY location globally
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (!q || q.length < 2) {
+      setOnlineResults([]);
+      setIsSearchingOnline(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        setIsSearchingOnline(true);
+        const res = await fetch(`http://localhost:5000/api/weather/search?q=${encodeURIComponent(q)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.locations)) {
+            // Filter out exact matches already shown in filteredSearchLocations
+            const existing = new Set(filteredSearchLocations.map(l => l.city.toLowerCase()));
+            const novel = data.locations.filter(loc => !existing.has(loc.city.toLowerCase()));
+            setOnlineResults(novel);
+          }
+        }
+      } catch (err) {
+        console.warn('Online geocoding search note:', err);
+      } finally {
+        setIsSearchingOnline(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, filteredSearchLocations]);
+
+  // Filter locations for the Location Picker Dropdown Menu
+  const dropdownFilteredLocations = useMemo(() => {
+    let list = locationsWithLiveData;
+
+    // Region filter
+    if (selectedRegion === 'Popular') {
+      const popSet = new Set(POPULAR_INDIAN_HUBS.map(h => h.toLowerCase()));
+      list = list.filter(l => popSet.has(l.city.toLowerCase()));
+    } else if (selectedRegion !== 'All') {
+      list = list.filter(l => (l.region || '').toLowerCase() === selectedRegion.toLowerCase());
+    }
+
+    // Dropdown search input filter
+    const dq = dropdownSearch.trim().toLowerCase();
+    if (dq) {
+      list = list.filter(l => 
+        l.city.toLowerCase().includes(dq) || 
+        l.state.toLowerCase().includes(dq)
+      );
+    }
+
+    return list;
+  }, [locationsWithLiveData, selectedRegion, dropdownSearch]);
+
+  // GPS Geolocation Handler
+  const handleDetectGPS = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser.');
+      return;
+    }
+    setIsDetectingGPS(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        try {
+          const res = await fetch(`http://localhost:5000/api/weather/reverse?lat=${lat}&lon=${lon}`);
+          if (res.ok) {
+            const data = await res.json();
+            onSelectLocation({
+              city: data.city || 'Detected Location',
+              state: data.state || 'India',
+              country: data.country || 'IN',
+              lat,
+              lon,
+              risk: 'Low',
+              temp: 25,
+              condition: 'Live Telemetry'
+            });
+          } else {
+            // Find closest city in list
+            onSelectLocation({
+              city: 'My GPS Location',
+              state: 'GPS Detected',
+              lat,
+              lon,
+              risk: 'Low',
+              temp: 25,
+              condition: 'Clear'
+            });
+          }
+        } catch {
+          onSelectLocation({
+            city: 'My Location',
+            state: 'Detected Coordinates',
+            lat,
+            lon,
+            risk: 'Low',
+            temp: 25,
+            condition: 'Clear'
+          });
+        } finally {
+          setIsDetectingGPS(false);
+          setLocationMenuOpen(false);
+          setSearchOpen(false);
+          setSearchQuery('');
+        }
+      },
+      (err) => {
+        console.warn('GPS location request error:', err.message);
+        setIsDetectingGPS(false);
+      },
+      { timeout: 10000, enableHighAccuracy: true }
+    );
+  };
 
   const [broadcastNotifs, setBroadcastNotifs] = useState([]);
   const [notifPermission, setNotifPermission] = useState(() => {
@@ -158,28 +300,30 @@ export default function TopNavbar({
 
   const allNotifications = [...broadcastNotifs, ...notifications];
 
+  const REGION_TABS = ['All', 'Popular', 'East', 'North', 'South', 'West', 'Central', 'Northeast'];
+
   return (
-    <header className="sticky top-0 z-30 h-16 bg-slate-950/40 backdrop-blur-2xl border-b border-white/5 px-6 flex items-center justify-between gap-6 transition-all duration-300">
+    <header className="sticky top-0 z-50 h-16 bg-slate-950/80 backdrop-blur-2xl border-b border-white/10 px-4 sm:px-6 flex items-center justify-between gap-4 transition-all duration-300">
       
       {/* Left: Brand Identity */}
-      <div className="flex items-center gap-4 shrink-0">
+      <div className="flex items-center gap-3 shrink-0">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500/20 to-indigo-600/20 border border-sky-400/30 flex items-center justify-center shadow-[0_0_15px_rgba(56,189,248,0.15)] relative overflow-hidden group">
           <div className="absolute inset-0 bg-gradient-to-tr from-sky-400/0 via-white/10 to-sky-400/0 translate-x-[-100%] group-hover:animate-[shimmer_1.5s_infinite]"></div>
           <CloudLightning className="w-5 h-5 text-sky-400 relative z-10 drop-shadow-[0_0_5px_rgba(56,189,248,0.5)]" />
         </div>
         <div>
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             <span className="text-lg font-bold tracking-tight text-white">
               Resona<span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-indigo-400">Alert</span>
             </span>
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.6)]" title="IMD & NASA Telemetry Online" />
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.6)]" title="IMD & OpenWeather Telemetry Online" />
           </div>
-          <div className="text-[11px] text-slate-400 font-sans font-medium mt-0.5">Emergency response platform</div>
+          <div className="text-[11px] text-slate-400 font-sans font-medium">All India & Global Telemetry</div>
         </div>
       </div>
 
-      {/* Center: Search Location Bar */}
-      <div className="flex-1 max-w-xl relative hidden lg:block" ref={searchRef}>
+      {/* Center: Search Location Bar (Supports EVERY location) */}
+      <div className="flex-1 max-w-xl relative hidden md:block" ref={searchRef}>
         <div className="relative group">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors group-hover:text-teal-400 stroke-[1.8]" />
           <input
@@ -189,111 +333,372 @@ export default function TopNavbar({
               setSearchQuery(e.target.value);
               setSearchOpen(true);
             }}
-            onFocus={() => setSearchOpen(true)}
-            placeholder="Search city or district in India..."
-            className="w-full pl-10 pr-12 py-2 bg-slate-900/60 border border-white/10 hover:border-white/20 focus:border-teal-500/50 focus:bg-slate-900/80 rounded-xl text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none transition-all duration-300 shadow-inner"
+            onFocus={() => {
+              setLocationMenuOpen(false);
+              setNotificationsOpen(false);
+              setUserMenuOpen(false);
+              setSearchOpen(true);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                setSearchOpen(false);
+                e.target.blur();
+              }
+            }}
+            placeholder="Search any city, district, or town in India or worldwide..."
+            className="w-full pl-10 pr-24 py-2 bg-slate-900/90 border border-white/10 hover:border-white/20 focus:border-teal-500/60 focus:bg-slate-900 rounded-xl text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none transition-all duration-300 shadow-inner"
           />
-          <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-sans font-medium text-slate-400 bg-white/5 px-2 py-0.5 rounded-lg border border-white/10">
-            ⌘K
-          </kbd>
+          <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+            {isSearchingOnline && (
+              <Loader2 className="w-3.5 h-3.5 text-sky-400 animate-spin" />
+            )}
+            {searchQuery && (
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSearchQuery('');
+                  setSearchOpen(false);
+                }}
+                className="text-slate-400 hover:text-white p-0.5"
+                title="Clear search"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+            <kbd className="text-[10px] font-sans font-medium text-slate-400 bg-white/5 px-1.5 py-0.5 rounded border border-white/10">
+              ESC
+            </kbd>
+          </div>
         </div>
 
-        {/* Search Dropdown Results */}
+        {/* Search Dropdown Results with Solid Opaque Background */}
         {searchOpen && (
-          <div className="absolute top-full left-0 right-0 mt-2 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_12px_40px_-10px_rgba(0,0,0,0.6)] overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-            <div className="px-3.5 py-2.5 bg-slate-800/40 border-b border-white/5 text-xs font-medium text-slate-300 font-sans flex justify-between items-center">
-              <span>Select your city</span>
-              <span className="text-teal-300 bg-teal-400/10 px-2.5 py-0.5 rounded-full text-[11px] font-medium border border-teal-400/20">10 monitored cities</span>
-            </div>
-            <div className="max-h-64 overflow-y-auto no-scrollbar">
-              {filteredLocations.map((loc) => (
+          <div 
+            style={{ backgroundColor: '#0B1120' }}
+            className="absolute top-full left-0 right-0 mt-2 border border-slate-700/80 rounded-2xl shadow-[0_25px_70px_rgba(0,0,0,0.95)] overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150 max-h-[460px] flex flex-col"
+          >
+            {/* Dropdown Header with GPS button & live count */}
+            <div 
+              style={{ backgroundColor: '#0F172A' }}
+              className="px-3.5 py-2.5 border-b border-slate-800 text-xs font-medium text-slate-300 font-sans flex justify-between items-center shrink-0"
+            >
+              <span className="flex items-center gap-2">
+                <span className="font-semibold text-white">Select Location</span>
+                <span className="text-[10px] text-teal-300 bg-teal-400/10 px-2 py-0.5 rounded-full border border-teal-400/20">
+                  {locationsWithLiveData.length}+ Indian cities & Global
+                </span>
+              </span>
+              <div className="flex items-center gap-2">
                 <button
-                  key={loc.city}
+                  onClick={handleDetectGPS}
+                  disabled={isDetectingGPS}
+                  className="flex items-center gap-1 text-[11px] text-sky-300 hover:text-sky-200 bg-sky-500/15 hover:bg-sky-500/25 px-2 py-1 rounded-lg border border-sky-500/25 transition-all cursor-pointer font-medium"
+                >
+                  {isDetectingGPS ? (
+                    <Loader2 className="w-3 h-3 animate-spin text-sky-400" />
+                  ) : (
+                    <Navigation className="w-3 h-3 text-sky-400" />
+                  )}
+                  <span>{isDetectingGPS ? 'Locating...' : 'Use My GPS'}</span>
+                </button>
+                <button
+                  onClick={() => setSearchOpen(false)}
+                  className="p-1 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                  title="Close search"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            <div 
+              style={{ backgroundColor: '#0B1120' }}
+              className="overflow-y-auto no-scrollbar flex-1 divide-y divide-slate-800/80"
+            >
+              {/* Matched Indian Cities */}
+              {filteredSearchLocations.map((loc) => (
+                <button
+                  key={`${loc.city}-${loc.state}`}
                   onClick={() => {
                     onSelectLocation(loc);
                     setSearchOpen(false);
                     setSearchQuery('');
                   }}
-                  className="w-full px-4 py-2.5 text-left text-sm flex items-center justify-between hover:bg-white/5 transition-colors border-b border-white/5 last:border-0 group cursor-pointer"
+                  className="w-full px-4 py-2.5 text-left text-sm flex items-center justify-between bg-[#0B1120] hover:bg-slate-800/90 transition-colors group cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-teal-500/20 group-hover:text-teal-400 transition-colors">
-                        <MapPin className="w-3.5 h-3.5 text-slate-400 group-hover:text-teal-400 stroke-[1.8]" />
+                    <div className="w-7 h-7 rounded-lg bg-slate-800 flex items-center justify-center group-hover:bg-teal-500/20 group-hover:text-teal-400 transition-colors shrink-0">
+                      <MapPin className="w-3.5 h-3.5 text-slate-400 group-hover:text-teal-400 stroke-[1.8]" />
                     </div>
-                    <span className="font-medium text-slate-200 group-hover:text-white transition-colors">{loc.city}</span>
-                    <span className="text-slate-400 text-xs font-normal">({loc.state})</span>
+                    <div>
+                      <span className="font-medium text-slate-200 group-hover:text-white transition-colors">{loc.city}</span>
+                      <span className="text-slate-400 text-xs font-normal ml-1.5">({loc.state})</span>
+                      {loc.region && (
+                        <span className="ml-2 text-[10px] text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded">
+                          {loc.region}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 bg-slate-950/60 px-2.5 py-1 rounded-lg border border-white/5">
-                    <span className="text-slate-300 font-sans text-xs">{loc.temp}°C</span>
+                  <div className="flex items-center gap-2">
+                    {loc.risk && (
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                        loc.risk === 'Very High' || loc.risk === 'High' 
+                          ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' 
+                          : 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20'
+                      }`}>
+                        {loc.risk}
+                      </span>
+                    )}
+                    <span className="text-slate-300 font-sans text-xs bg-slate-900 px-2 py-1 rounded-lg border border-slate-800">
+                      {loc.temp != null ? `${loc.temp}°C` : '--'}
+                    </span>
                   </div>
                 </button>
               ))}
+
+              {/* Online / Worldwide Geocoding Results */}
+              {onlineResults.length > 0 && (
+                <div style={{ backgroundColor: '#080D1A' }}>
+                  <div 
+                    style={{ backgroundColor: '#0F172A' }}
+                    className="px-4 py-1.5 text-[10px] font-semibold text-sky-400 tracking-wider uppercase flex items-center gap-1.5 border-t border-slate-800"
+                  >
+                    <Globe className="w-3 h-3" />
+                    <span>Global Geocoded Locations</span>
+                  </div>
+                  {onlineResults.map((loc, idx) => (
+                    <button
+                      key={`online-${loc.city}-${loc.lat}-${idx}`}
+                      onClick={() => {
+                        onSelectLocation({
+                          city: loc.city,
+                          state: loc.state || loc.country || '',
+                          country: loc.country || 'IN',
+                          lat: loc.lat,
+                          lon: loc.lon,
+                          risk: 'Low',
+                          temp: 25,
+                          condition: 'Live Telemetry'
+                        });
+                        setSearchOpen(false);
+                        setSearchQuery('');
+                      }}
+                      className="w-full px-4 py-2.5 text-left text-sm flex items-center justify-between bg-[#080D1A] hover:bg-sky-500/15 transition-colors group cursor-pointer border-t border-slate-800/60"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-7 h-7 rounded-lg bg-sky-500/15 flex items-center justify-center text-sky-400 group-hover:bg-sky-500/25 transition-colors shrink-0">
+                          <Globe className="w-3.5 h-3.5 stroke-[1.8]" />
+                        </div>
+                        <div>
+                          <span className="font-medium text-slate-200 group-hover:text-white transition-colors">{loc.city}</span>
+                          <span className="text-slate-400 text-xs font-normal ml-1.5">
+                            {loc.state ? `${loc.state}, ` : ''}{loc.country}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-[10px] text-sky-300 bg-sky-500/10 px-2 py-0.5 rounded-lg border border-sky-500/20">
+                        Select Location
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {filteredSearchLocations.length === 0 && onlineResults.length === 0 && !isSearchingOnline && (
+                <div className="px-6 py-8 text-center text-slate-400 text-xs">
+                  <p>No exact location found for "{searchQuery}".</p>
+                  <p className="mt-1 text-slate-500">Try typing a city name, district, or use your GPS location above.</p>
+                </div>
+              )}
+
             </div>
           </div>
         )}
       </div>
 
       {/* Right Section: Location Pill, Atmosphere, Notifications, Profile */}
-      <div className="flex items-center gap-3 shrink-0">
+      <div className="flex items-center gap-2.5 shrink-0">
         
-        {/* Active Location Pill */}
+        {/* Active Location Pill & Comprehensive Location Picker */}
         <div className="relative" ref={locRef}>
           <button
-            onClick={() => setLocationMenuOpen(!locationMenuOpen)}
-            className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-slate-800/50 hover:bg-slate-700/50 border border-white/10 text-sm text-slate-200 transition-all duration-300 shadow-sm cursor-pointer"
+            onClick={() => {
+              setSearchOpen(false);
+              setNotificationsOpen(false);
+              setUserMenuOpen(false);
+              setLocationMenuOpen(!locationMenuOpen);
+            }}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-white/10 text-sm text-slate-200 transition-all duration-300 shadow-sm cursor-pointer"
+            title="Click to choose from all 180+ Indian cities or search any location"
           >
             <MapPin className="w-4 h-4 text-teal-400 stroke-[1.8]" />
-            <span className="font-medium text-white">{currentLocation.city}</span>
-            <span className="text-teal-300 text-xs font-medium bg-teal-500/10 px-2 py-0.5 rounded-lg border border-teal-500/20">
-              {current?.temp ?? currentLocation.temp}°C
+            <span className="font-semibold text-white max-w-[110px] sm:max-w-[140px] truncate">{currentLocation?.city || 'Bhubaneswar'}</span>
+            <span className="text-teal-300 text-xs font-semibold bg-teal-500/10 px-2 py-0.5 rounded-lg border border-teal-500/20">
+              {current?.temp ?? currentLocation?.temp ?? 25}°C
             </span>
           </button>
 
+          {/* Full Location Picker Modal / Dropdown with Solid Background */}
           {locationMenuOpen && (
-            <div className="absolute right-0 mt-2 w-72 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_12px_40px_-10px_rgba(0,0,0,0.6)] overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-              <div className="px-3.5 py-2.5 bg-slate-800/40 border-b border-white/5 text-xs font-medium text-slate-300 font-sans flex items-center justify-between">
-                <span>Select active city</span>
-                <span className="text-teal-300 flex items-center gap-1.5 bg-teal-500/10 px-2.5 py-0.5 rounded-full text-[11px] font-medium border border-teal-500/20"><span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse"></span>Live</span>
+            <div 
+              style={{ backgroundColor: '#0B1120' }}
+              className="absolute right-0 mt-2 w-80 sm:w-96 border border-slate-700/80 rounded-2xl shadow-[0_25px_70px_rgba(0,0,0,0.95)] overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150 flex flex-col max-h-[520px]"
+            >
+              {/* Header */}
+              <div 
+                style={{ backgroundColor: '#0F172A' }}
+                className="p-3.5 border-b border-slate-800 space-y-2.5 shrink-0"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-white uppercase tracking-wider">All Locations Network</span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={handleDetectGPS}
+                      disabled={isDetectingGPS}
+                      className="flex items-center gap-1.5 text-xs text-teal-300 hover:text-teal-200 bg-teal-500/15 hover:bg-teal-500/25 px-2.5 py-1 rounded-lg border border-teal-500/30 transition-all cursor-pointer font-medium"
+                      title="Detect your exact GPS location"
+                    >
+                      {isDetectingGPS ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Navigation className="w-3.5 h-3.5" />}
+                      <span>{isDetectingGPS ? 'Detecting...' : 'Use My GPS'}</span>
+                    </button>
+                    <button
+                      onClick={() => setLocationMenuOpen(false)}
+                      className="p-1 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                      title="Close"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Filter Input */}
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={dropdownSearch}
+                    onChange={(e) => setDropdownSearch(e.target.value)}
+                    placeholder="Filter cities or state..."
+                    className="w-full pl-8 pr-3 py-1.5 bg-slate-900 border border-slate-700/80 rounded-xl text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-teal-500/50"
+                  />
+                  {dropdownSearch && (
+                    <button 
+                      onClick={() => setDropdownSearch('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Region Tabs */}
+                <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-0.5">
+                  {REGION_TABS.map((r) => (
+                    <button
+                      key={r}
+                      onClick={() => setSelectedRegion(r)}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-medium shrink-0 transition-all cursor-pointer ${
+                        selectedRegion === r
+                          ? 'bg-teal-500 text-slate-950 font-bold shadow-sm'
+                          : 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      {r}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="max-h-64 overflow-y-auto no-scrollbar py-1">
-                {locationsWithLiveData.map((loc) => (
-                  <button
-                    key={loc.city}
-                    onClick={() => {
-                      onSelectLocation(loc);
-                      setLocationMenuOpen(false);
-                    }}
-                    className={`w-full text-left px-4 py-2 text-sm flex items-center justify-between transition-colors ${
-                      loc.city === currentLocation.city 
-                        ? 'bg-sky-500/15 text-sky-300 font-semibold' 
-                        : 'text-slate-300 hover:bg-white/5 font-medium'
-                    }`}
-                  >
-                    <span>{loc.city}</span>
-                    <span className={`font-mono text-xs px-2 py-0.5 rounded-md ${loc.city === currentLocation.city ? 'bg-sky-500/20 text-sky-300' : 'bg-slate-950/50 text-slate-400'}`}>{loc.temp}°C</span>
-                  </button>
-                ))}
+
+              {/* Locations List */}
+              <div 
+                style={{ backgroundColor: '#0B1120' }}
+                className="overflow-y-auto no-scrollbar flex-1 divide-y divide-slate-800/80 py-1"
+              >
+                {dropdownFilteredLocations.length === 0 ? (
+                  <div className="py-8 text-center text-xs text-slate-400">
+                    <p>No locations match "{dropdownSearch}".</p>
+                    <p className="mt-1 text-slate-500">Try searching via the main search bar for global cities.</p>
+                  </div>
+                ) : (
+                  dropdownFilteredLocations.map((loc) => {
+                    const isSelected = (currentLocation?.city || '').toLowerCase() === loc.city.toLowerCase();
+                    return (
+                      <button
+                        key={`${loc.city}-${loc.state}`}
+                        onClick={() => {
+                          onSelectLocation(loc);
+                          setLocationMenuOpen(false);
+                          setDropdownSearch('');
+                        }}
+                        className={`w-full text-left px-4 py-2.5 text-xs flex items-center justify-between transition-colors cursor-pointer ${
+                          isSelected 
+                            ? 'bg-teal-500/20 text-teal-300 font-semibold' 
+                            : 'bg-[#0B1120] text-slate-300 hover:bg-slate-800/90 font-medium'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <MapPin className={`w-3.5 h-3.5 shrink-0 ${isSelected ? 'text-teal-400' : 'text-slate-400'}`} />
+                          <div className="truncate">
+                            <span className={isSelected ? 'text-teal-200' : 'text-slate-200'}>{loc.city}</span>
+                            <span className="text-slate-400 text-[11px] ml-1.5">({loc.state})</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0 ml-2">
+                          {loc.risk && (
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                              loc.risk === 'Very High' || loc.risk === 'High'
+                                ? 'bg-rose-500/20 text-rose-300'
+                                : 'bg-emerald-500/10 text-emerald-300'
+                            }`}>
+                              {loc.risk}
+                            </span>
+                          )}
+                          <span className={`font-mono text-xs px-2 py-0.5 rounded-md ${
+                            isSelected ? 'bg-teal-500/25 text-teal-200' : 'bg-slate-900 text-slate-400 border border-slate-800'
+                          }`}>
+                            {loc.temp != null ? `${loc.temp}°C` : '--'}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })
+                )}
               </div>
+
+              {/* Footer info */}
+              <div 
+                style={{ backgroundColor: '#0F172A' }}
+                className="p-2.5 border-t border-slate-800 text-[11px] text-slate-400 flex items-center justify-between shrink-0"
+              >
+                <span>Showing {dropdownFilteredLocations.length} locations</span>
+                <span className="text-teal-400 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse"></span>
+                  Live Telemetry
+                </span>
+              </div>
+
             </div>
           )}
         </div>
 
         {/* Atmosphere Wallpaper Switcher & Quick Pexels Shuffle */}
-        <div className="flex items-center bg-slate-900/50 rounded-xl border border-white/10 p-1 shadow-sm h-[38px]">
+        <div className="flex items-center bg-slate-900/80 rounded-xl border border-white/10 p-1 shadow-sm h-[38px]">
           <button
             onClick={onOpenWallpaperModal}
-            className="flex items-center gap-2 px-2.5 h-full text-xs font-semibold text-slate-300 hover:text-white transition-all rounded-lg hover:bg-white/10"
+            className="flex items-center gap-2 px-2.5 h-full text-xs font-semibold text-slate-300 hover:text-white transition-all rounded-lg hover:bg-white/10 cursor-pointer"
             title="Atmospheric Wallpaper Settings (Pexels 4K)"
           >
             <Sparkles className="w-4 h-4 text-indigo-400" />
-            <span className="hidden md:inline">Atmosphere</span>
+            <span className="hidden lg:inline">Atmosphere</span>
           </button>
           {onShuffleWallpaper && (
             <button
               onClick={() => {
                 onShuffleWallpaper();
               }}
-              className="px-2 h-full text-slate-400 hover:text-indigo-300 hover:bg-white/10 rounded-lg transition-all border-l border-white/10 flex items-center justify-center"
+              className="px-2 h-full text-slate-400 hover:text-indigo-300 hover:bg-white/10 rounded-lg transition-all border-l border-white/10 flex items-center justify-center cursor-pointer"
               title="Shuffle to a new Pexels background now"
             >
               <RefreshCw className="w-3.5 h-3.5" />
@@ -304,8 +709,13 @@ export default function TopNavbar({
         {/* Notifications Bell */}
         <div className="relative" ref={notifRef}>
           <button
-            onClick={() => setNotificationsOpen(!notificationsOpen)}
-            className="w-[38px] h-[38px] flex items-center justify-center rounded-xl bg-slate-900/50 hover:bg-slate-800 border border-white/10 text-slate-300 hover:text-white transition-all relative shadow-sm cursor-pointer"
+            onClick={() => {
+              setSearchOpen(false);
+              setLocationMenuOpen(false);
+              setUserMenuOpen(false);
+              setNotificationsOpen(!notificationsOpen);
+            }}
+            className="w-[38px] h-[38px] flex items-center justify-center rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-white/10 text-slate-300 hover:text-white transition-all relative shadow-sm cursor-pointer"
             title="Alert Notifications"
           >
             {broadcastNotifs.length > 0 ? (
@@ -323,8 +733,14 @@ export default function TopNavbar({
           </button>
 
           {notificationsOpen && (
-            <div className="absolute right-0 mt-2 w-84 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_12px_40px_-10px_rgba(0,0,0,0.6)] overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-              <div className="px-4 py-3 bg-slate-800/40 border-b border-white/5 flex items-center justify-between">
+            <div 
+              style={{ backgroundColor: '#0B1120' }}
+              className="absolute right-0 mt-2 w-84 border border-slate-700/80 rounded-2xl shadow-[0_25px_70px_rgba(0,0,0,0.95)] overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150"
+            >
+              <div 
+                style={{ backgroundColor: '#0F172A' }}
+                className="px-4 py-3 border-b border-slate-800 flex items-center justify-between"
+              >
                 <span className="font-semibold text-sm text-white">Emergency broadcasts</span>
                 <span className="text-[10px] text-rose-300 font-sans font-bold bg-rose-500/15 px-2.5 py-0.5 rounded-full border border-rose-500/30">
                   {allNotifications.length} ALERTS
@@ -344,9 +760,12 @@ export default function TopNavbar({
                 </div>
               )}
 
-              <div className="divide-y divide-white/5 max-h-72 overflow-y-auto no-scrollbar">
+              <div 
+                style={{ backgroundColor: '#0B1120' }}
+                className="divide-y divide-slate-800/80 max-h-72 overflow-y-auto no-scrollbar"
+              >
                 {allNotifications.map((n) => (
-                  <div key={n.id} className={`p-3.5 hover:bg-white/5 transition-colors group cursor-default ${n.isBroadcast ? 'bg-rose-950/20 border-l-2 border-rose-500' : ''}`}>
+                  <div key={n.id} className={`p-3.5 hover:bg-slate-800/80 transition-colors group cursor-default ${n.isBroadcast ? 'bg-rose-950/40 border-l-2 border-rose-500' : ''}`}>
                     <div className="flex justify-between items-start mb-1">
                       <span className="text-sm font-semibold text-rose-200 group-hover:text-rose-100 transition-colors flex items-center gap-1.5">
                         {n.isBroadcast && <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-ping" />}
@@ -398,7 +817,12 @@ export default function TopNavbar({
 
             <div className="relative" ref={userRef}>
               <button
-                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                onClick={() => {
+                  setSearchOpen(false);
+                  setLocationMenuOpen(false);
+                  setNotificationsOpen(false);
+                  setUserMenuOpen(!userMenuOpen);
+                }}
                 className="w-9 h-9 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 hover:from-slate-600 hover:to-slate-700 border border-white/15 text-white flex items-center justify-center text-xs font-semibold transition-all shadow-md cursor-pointer"
                 title={currentUser?.name}
               >
@@ -406,8 +830,14 @@ export default function TopNavbar({
               </button>
 
               {userMenuOpen && (
-                <div className="absolute right-0 mt-2 w-64 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_12px_40px_-10px_rgba(0,0,0,0.6)] overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                  <div className="p-4 bg-slate-800/40 border-b border-white/5">
+                <div 
+                  style={{ backgroundColor: '#0B1120' }}
+                  className="absolute right-0 mt-2 w-64 border border-slate-700/80 rounded-2xl shadow-[0_25px_70px_rgba(0,0,0,0.95)] overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150"
+                >
+                  <div 
+                    style={{ backgroundColor: '#0F172A' }}
+                    className="p-4 border-b border-slate-800"
+                  >
                     <div className="font-semibold text-sm text-white truncate">{currentUser?.name}</div>
                     <a href={`mailto:${currentUser?.email}`} className="block text-[11px] text-slate-400 truncate mt-0.5 hover:text-cyan-400 hover:underline">{currentUser?.email}</a>
                     <div className="mt-2 inline-block">
@@ -417,14 +847,17 @@ export default function TopNavbar({
                     </div>
                   </div>
 
-                  <div className="p-2 space-y-1">
+                  <div 
+                    style={{ backgroundColor: '#0B1120' }}
+                    className="p-2 space-y-1"
+                  >
                     {onNavigateToAuth && (
                       <button
                         onClick={() => {
                           onNavigateToAuth();
                           setUserMenuOpen(false);
                         }}
-                        className="w-full text-left px-3 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors flex items-center gap-3 cursor-pointer"
+                        className="w-full text-left px-3 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-lg transition-colors flex items-center gap-3 cursor-pointer"
                       >
                         <User className="w-4 h-4 text-sky-400" /> Identity & Roles
                       </button>
@@ -435,7 +868,7 @@ export default function TopNavbar({
                         logout();
                         setUserMenuOpen(false);
                       }}
-                      className="w-full text-left px-3 py-2 text-sm font-bold text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 rounded-lg transition-colors flex items-center gap-3 cursor-pointer"
+                      className="w-full text-left px-3 py-2 text-sm font-bold text-rose-400 hover:bg-rose-500/15 hover:text-rose-300 rounded-lg transition-colors flex items-center gap-3 cursor-pointer"
                     >
                       <LogOut className="w-4 h-4" /> Sign Out
                     </button>
@@ -447,11 +880,11 @@ export default function TopNavbar({
         ) : (
           <button
             onClick={() => onNavigateToAuth ? onNavigateToAuth() : onOpenAuthModal('login')}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-sm transition-all shadow-[0_0_15px_rgba(56,189,248,0.3)] hover:shadow-[0_0_20px_rgba(56,189,248,0.5)] cursor-pointer"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-sm transition-all shadow-[0_0_15px_rgba(56,189,248,0.3)] hover:shadow-[0_0_20px_rgba(56,189,248,0.5)] cursor-pointer"
             title="Sign in as Citizen or Relief Volunteer"
           >
             <User className="w-4 h-4" />
-            <span>Sign In</span>
+            <span className="hidden sm:inline">Sign In</span>
           </button>
         )}
 

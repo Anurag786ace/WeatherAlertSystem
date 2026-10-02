@@ -133,18 +133,18 @@ export default function Header({
 
         {/* Center: Real-time System Telemetry Badges */}
         <div className="hidden md:flex items-center gap-2 lg:gap-3 font-mono text-xs">
-          {/* MongoDB Status (Clickable to inspect) */}
+          {/* Cloud Sync Status */}
           <button
             onClick={() => {
               sound.playBlip();
               onOpenAuthModal && onOpenAuthModal('database');
             }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-950/40 border border-emerald-500/40 text-emerald-400 hover:border-emerald-400 transition-colors"
-            title="Inspect MongoDB Database at mongodb://localhost:27017/"
+            title="Inspect Responder Directory"
           >
             <Database className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-            <span>MongoDB:</span>
-            <span className="font-semibold text-emerald-300">ONLINE (27017)</span>
+            <span>CLOUD SYNC:</span>
+            <span className="font-semibold text-emerald-300">ONLINE</span>
           </button>
 
           {/* LoRa Mesh Radio */}
@@ -207,8 +207,8 @@ export default function Header({
                       <span className="text-cyan-400 font-bold">{currentUser.badgeNumber || 'CMD-1011'}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Database:</span>
-                      <span className="text-emerald-400 font-semibold truncate max-w-[140px]">localhost:27017</span>
+                      <span className="text-slate-500">Sync:</span>
+                      <span className="text-emerald-400 font-semibold truncate max-w-[140px]">Encrypted & Online</span>
                     </div>
                   </div>
 
@@ -223,7 +223,7 @@ export default function Header({
                     >
                       <span className="flex items-center gap-1.5">
                         <Database className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>Inspect MongoDB Users</span>
+                        <span>Responder Directory</span>
                       </span>
                       <span className="text-emerald-400">({usersCount})</span>
                     </button>

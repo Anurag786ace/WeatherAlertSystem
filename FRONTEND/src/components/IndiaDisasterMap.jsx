@@ -146,7 +146,11 @@ export default function IndiaDisasterMap({ onSelectAlertZone, onSelectLocation, 
   const fetchLiveIndiaWeather = useCallback(async () => {
     try {
       setIsLoadingLiveWeather(true);
-      const cityNames = ALL_INDIA_CITIES.map(c => c.city).join(',');
+      const hubCities = Array.from(new Set([
+        ...(currentLocation?.city ? [currentLocation.city] : []),
+        ...ALL_INDIA_CITIES.map(c => c.city)
+      ]));
+      const cityNames = hubCities.slice(0, 100).join(',');
       const res = await fetch(`http://localhost:5000/api/weather/multi?cities=${encodeURIComponent(cityNames)}&fresh=true`);
       
       if (res.ok) {
@@ -185,19 +189,57 @@ export default function IndiaDisasterMap({ onSelectAlertZone, onSelectLocation, 
               isLive: false
             };
           });
+
+          // Ensure user's currentLocation is in liveCities even if custom/global
+          if (currentLocation && currentLocation.city) {
+            const exists = merged.some(c => c.city.toLowerCase() === currentLocation.city.toLowerCase());
+            if (!exists) {
+              merged.unshift({
+                city: currentLocation.city,
+                state: currentLocation.state || '',
+                lat: currentLocation.lat || 20.2961,
+                lon: currentLocation.lon || 85.8245,
+                risk: currentLocation.risk || 'Low',
+                temp: currentLocation.temp || 25,
+                condition: currentLocation.condition || 'Clouds',
+                wind_speed: 15,
+                humidity: 75,
+                isLive: true
+              });
+            }
+          }
+
           setLiveCities(merged);
           return;
         }
       }
+
       // Fallback
-      setLiveCities(ALL_INDIA_CITIES.map(c => ({
+      const fallbackList = ALL_INDIA_CITIES.map(c => ({
         ...c,
         temp: c.defaultTemp,
         condition: c.defaultCond,
         wind_speed: 18,
         humidity: 80,
         isLive: false
-      })));
+      }));
+
+      if (currentLocation && currentLocation.city && !fallbackList.some(c => c.city.toLowerCase() === currentLocation.city.toLowerCase())) {
+        fallbackList.unshift({
+          city: currentLocation.city,
+          state: currentLocation.state || '',
+          lat: currentLocation.lat || 20.2961,
+          lon: currentLocation.lon || 85.8245,
+          risk: currentLocation.risk || 'Low',
+          temp: currentLocation.temp || 25,
+          condition: currentLocation.condition || 'Clouds',
+          wind_speed: 15,
+          humidity: 75,
+          isLive: true
+        });
+      }
+
+      setLiveCities(fallbackList);
     } catch (err) {
       console.warn('Live weather batch note:', err.message);
       setLiveCities(ALL_INDIA_CITIES.map(c => ({
@@ -211,7 +253,7 @@ export default function IndiaDisasterMap({ onSelectAlertZone, onSelectLocation, 
     } finally {
       setIsLoadingLiveWeather(false);
     }
-  }, []);
+  }, [currentLocation]);
 
   useEffect(() => {
     fetchLiveIndiaWeather();
@@ -392,7 +434,46 @@ export default function IndiaDisasterMap({ onSelectAlertZone, onSelectLocation, 
 
       markersRef.current.push(marker);
     });
+
+    // Guarantee user marker is always placed on map
+    const userCityExists = liveCities.some(c => (c.city || '').toLowerCase() === userCityName.toLowerCase());
+    if (!userCityExists && userLon != null && userLat != null) {
+      const el = document.createElement('div');
+      el.style.width = '0px';
+      el.style.height = '0px';
+      el.className = 'cursor-pointer z-40';
+      el.innerHTML = `
+        <div class="absolute -left-3.5 -top-3.5 w-7 h-7 group flex items-center justify-center">
+          <span class="absolute -left-2 -top-2 w-11 h-11 rounded-full bg-teal-400/20 animate-ping pointer-events-none"></span>
+          <div class="relative w-5 h-5 rounded-full bg-teal-400 border-2 border-white shadow-[0_2px_12px_rgba(20,184,166,0.6)] flex items-center justify-center text-[10px] text-slate-900 font-bold">
+            📍
+          </div>
+          <span class="absolute left-7 top-1/2 -translate-y-1/2 text-xs font-medium text-white bg-slate-900/95 backdrop-blur-md border border-teal-400/40 px-3 py-1 rounded-full shadow-xl whitespace-nowrap z-40 flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse"></span>
+            <span>You are here • ${userCityName} (${currentLocation?.temp ?? '--'}°)</span>
+          </span>
+        </div>
+      `;
+      const marker = new mapboxgl.Marker({ element: el })
+        .setLngLat([userLon, userLat])
+        .addTo(map);
+      markersRef.current.push(marker);
+    }
   }, [liveCities, mapLoaded, onSelectLocation, currentLocation]);
+
+  // Fly to currentLocation when it changes
+  useEffect(() => {
+    if (!mapLoaded || !mapRef.current) return;
+    const lat = currentLocation?.lat;
+    const lon = currentLocation?.lon;
+    if (lat != null && lon != null) {
+      mapRef.current.flyTo({
+        center: [lon, lat],
+        zoom: 6.8,
+        duration: 1500
+      });
+    }
+  }, [currentLocation?.city, currentLocation?.lat, currentLocation?.lon, mapLoaded]);
 
   // 4. Render NASA EONET Live Natural Disaster Markers on Map
   useEffect(() => {
@@ -509,8 +590,14 @@ export default function IndiaDisasterMap({ onSelectAlertZone, onSelectLocation, 
       case 'west':
         map.flyTo({ center: [73.0, 19.2], zoom: 6.2, duration: 1600 });
         break;
+      case 'central':
+        map.flyTo({ center: [78.5, 22.5], zoom: 6.0, duration: 1600 });
+        break;
       case 'northeast':
         map.flyTo({ center: [91.8, 26.0], zoom: 7.0, duration: 1600 });
+        break;
+      case 'islands':
+        map.flyTo({ center: [92.7, 11.6], zoom: 6.5, duration: 1600 });
         break;
       default:
         map.flyTo({ center: [79.2, 22.4], zoom: 4.1, duration: 1500 });
@@ -569,7 +656,9 @@ export default function IndiaDisasterMap({ onSelectAlertZone, onSelectLocation, 
             <option value="north" className="bg-[#0D1324] text-white">North India</option>
             <option value="south" className="bg-[#0D1324] text-white">South India</option>
             <option value="west" className="bg-[#0D1324] text-white">West Coast</option>
+            <option value="central" className="bg-[#0D1324] text-white">Central India</option>
             <option value="northeast" className="bg-[#0D1324] text-white">North East</option>
+            <option value="islands" className="bg-[#0D1324] text-white">Islands</option>
           </select>
 
           {/* Layer Filter Buttons - Harmonious Segmented Control */}

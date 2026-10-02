@@ -165,7 +165,7 @@ export default function AuthPage({ onNavigateToTab, onOpenSafety }) {
       if (res.success) {
         sound.playSuccessChime();
         triggerConfetti();
-        setSuccessMsg(`✓ Successfully registered & saved to MongoDB (${res.storage || 'resona_db.users'})! Document ID: ${res.user._id || res.user.id}`);
+        setSuccessMsg(`✓ Successfully registered responder profile! ID: ${res.user._id || res.user.id}`);
         setFormData({
           name: '',
           email: '',
@@ -863,7 +863,7 @@ export default function AuthPage({ onNavigateToTab, onOpenSafety }) {
 
         <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 radiating-status-ring" />
-          <span>Database connected: {usersCount} registered users</span>
+          <span>Registry online: {usersCount} registered personnel</span>
         </div>
       </div>
 
@@ -879,17 +879,17 @@ export default function AuthPage({ onNavigateToTab, onOpenSafety }) {
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h4 className="text-sm sm:text-base font-semibold text-white">
-                  MongoDB Personnel Directory
+                  Emergency Personnel Directory
                 </h4>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold">
-                  resona_db.users
+                  Verified Registry
                 </span>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
-                  {usersCount} Registered Documents
+                  {usersCount} Registered Responders
                 </span>
               </div>
               <p className="text-xs text-slate-400 mt-0.5">
-                Live collection records connected at <code className="text-cyan-300 font-mono text-[11px]">mongodb://localhost:27017/resona_db</code>
+                Verified roster of disaster relief personnel, emergency coordinators, and field responders.
               </p>
             </div>
           </div>
@@ -903,7 +903,7 @@ export default function AuthPage({ onNavigateToTab, onOpenSafety }) {
               title="Refresh database records"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${refreshingDb ? 'animate-spin text-cyan-400' : ''}`} />
-              <span>{refreshingDb ? 'Syncing...' : 'Sync MongoDB'}</span>
+              <span>{refreshingDb ? 'Syncing...' : 'Sync Directory'}</span>
             </button>
             <button
               type="button"
@@ -922,7 +922,7 @@ export default function AuthPage({ onNavigateToTab, onOpenSafety }) {
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
               <input
                 type="text"
-                placeholder="Search registered accounts by name, email, phone, or MongoDB _id..."
+                placeholder="Search registered accounts by name, email, phone, or responder ID..."
                 value={dbSearch}
                 onChange={(e) => setDbSearch(e.target.value)}
                 className="w-full pl-9 pr-3 py-2 bg-white/[0.04] border border-white/10 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
@@ -997,7 +997,7 @@ export default function AuthPage({ onNavigateToTab, onOpenSafety }) {
                     </div>
 
                     <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between text-[10px] text-slate-400 font-mono">
-                      <span className="text-slate-500 truncate" title={`MongoDB Document ID: ${u._id || u.id}`}>
+                      <span className="text-slate-500 truncate" title={`Responder ID: ${u._id || u.id}`}>
                         ID: {(u._id || u.id || '').slice(0, 10)}...
                       </span>
 

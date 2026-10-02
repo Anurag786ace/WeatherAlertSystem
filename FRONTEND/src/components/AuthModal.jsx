@@ -204,14 +204,14 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }) {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base font-semibold text-white tracking-tight">
-                  {mode === 'login' ? 'Welcome to Resona' : mode === 'register' ? 'Create Responder Account' : 'Database Directory'}
+                  {mode === 'login' ? 'Welcome to Resona' : mode === 'register' ? 'Create Responder Account' : 'Personnel Directory'}
                 </h2>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30">
                   Secure
                 </span>
               </div>
               <p className="text-xs text-slate-400 mt-0.5">
-                {mode === 'login' ? 'Sign in to access disaster command & telemetry' : mode === 'register' ? 'Register for mission-control privileges' : 'Inspecting live registered records'}
+                {mode === 'login' ? 'Sign in to access disaster command & telemetry' : mode === 'register' ? 'Register for mission-control privileges' : 'Active verified disaster responders'}
               </p>
             </div>
           </div>
@@ -280,7 +280,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }) {
               }`}
             >
               <Database className="w-3 h-3 text-emerald-400" />
-              <span>Users ({usersCount})</span>
+              <span>Responders ({usersCount})</span>
             </button>
           </div>
         </div>
@@ -693,8 +693,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }) {
         <div className="px-5 py-2.5 bg-black/30 border-t border-white/[0.06] flex items-center justify-between text-[11px] text-slate-400">
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-slate-400">MongoDB Connected</span>
-            <span className="text-slate-600 font-mono hidden sm:inline">(resona_db)</span>
+            <span className="text-slate-400">System Synced & Secure</span>
           </div>
           <span className="text-slate-500 text-[10px]">Resona Disaster Intelligence</span>
         </div>

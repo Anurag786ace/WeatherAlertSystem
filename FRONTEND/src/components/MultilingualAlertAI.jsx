@@ -1670,7 +1670,7 @@ export default function MultilingualAlertAI({
               <div className="flex items-center justify-between border-b border-white/[0.08] pb-2">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-white">
                   <Clock className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>MongoDB Audit Log ({currentLocation?.state})</span>
+                  <span>Broadcast Transmission Log ({currentLocation?.state})</span>
                 </div>
                 <button
                   onClick={fetchBroadcastLogs}
@@ -1792,7 +1792,7 @@ export default function MultilingualAlertAI({
                     <div>Gateway: <span className="text-slate-200">{broadcastReceipt.networkReceipt?.gateway}</span></div>
                     <div>Delivery Ratio: <span className="text-emerald-400 font-bold">{broadcastReceipt.networkReceipt?.deliveryRate}</span> ({broadcastReceipt.networkReceipt?.deliveredCount?.toLocaleString()} active subscribers)</div>
                     <div>Target Region: <span className="text-white">{currentLocation?.city}, {currentLocation?.state}</span></div>
-                    <div>Database: <span className="text-emerald-300">Saved to MongoDB resona_db.broadcastlogs</span></div>
+                    <div>Archive: <span className="text-emerald-300">Archived to secure emergency dispatch ledger</span></div>
                   </div>
 
                   {/* Telecom Gateway Notice if not configured */}
@@ -2040,7 +2040,7 @@ export default function MultilingualAlertAI({
                   <div className="p-2.5 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-[11px] text-slate-300 flex items-center justify-between">
                     <span className="flex items-center gap-1.5">
                       <Mail className="w-3.5 h-3.5 text-cyan-400" />
-                      <span>Also broadcasting to all {mongoUsers?.length || 8} registered users in MongoDB database</span>
+                      <span>Also broadcasting to all {mongoUsers?.length || 8} registered emergency responders</span>
                     </span>
                     <span className="text-cyan-400 font-bold text-[10px] uppercase font-mono">Auto-Sync</span>
                   </div>

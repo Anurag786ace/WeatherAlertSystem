@@ -1,15 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 
+import { POPULAR_INDIAN_HUBS } from '../data/indiaCities';
+
 const WeatherContext = createContext(null);
 const API_BASE = 'http://localhost:5000/api/weather';
 
 // Polling interval (ms) – re-fetch every 60 seconds to ensure fresh real-time data
 const POLL_INTERVAL = 60 * 1000;
-
-const DEFAULT_INDIAN_HUBS = [
-  'Bhubaneswar', 'Puri', 'Cuttack', 'Kolkata', 'Patna', 
-  'Jaipur', 'Chennai', 'Mumbai', 'Guwahati', 'Delhi', 'Hyderabad', 'Bengaluru'
-];
 
 export function WeatherProvider({ children, city }) {
   const [current, setCurrent] = useState(null);
@@ -28,12 +25,13 @@ export function WeatherProvider({ children, city }) {
       setLoading(true);
       setError(null);
 
+      const hubsList = Array.from(new Set([cityName, ...POPULAR_INDIAN_HUBS]));
       const freshParam = isFresh ? '&fresh=true' : '';
       const [currentRes, forecastRes, multiRes, alertsRes, eventsRes] = await Promise.all([
         fetch(`${API_BASE}/current?city=${encodeURIComponent(cityName)}${freshParam}`),
         fetch(`${API_BASE}/forecast?city=${encodeURIComponent(cityName)}${freshParam}`),
-        fetch(`${API_BASE}/multi?cities=${DEFAULT_INDIAN_HUBS.join(',')}${freshParam}`),
-        fetch(`${API_BASE}/live-alerts`),
+        fetch(`${API_BASE}/multi?cities=${encodeURIComponent(hubsList.join(','))}${freshParam}`),
+        fetch(`${API_BASE}/live-alerts?city=${encodeURIComponent(cityName)}`),
         fetch(`http://localhost:5000/api/events?limit=25`).catch(() => fetch(`/api/events?limit=25`))
       ]);
 

@@ -61,32 +61,130 @@ function calculateLiveRisk(data) {
 }
 
 // -------------------------------------------------------------------
+// GET /api/weather/search?q=Bengaluru
+// Searches for locations using OpenWeather geocoding API
+// -------------------------------------------------------------------
+router.get('/search', async (req, res) => {
+  try {
+    const { q } = req.query;
+    if (!q || !q.trim()) {
+      return res.status(400).json({ success: false, message: 'Provide query parameter ?q=' });
+    }
+
+    const query = q.trim();
+    const cacheKey = `geo:${query.toLowerCase()}`;
+    const cached = getCached(cacheKey);
+    if (cached) {
+      return res.json({ success: true, source: 'cache', locations: cached });
+    }
+
+    // Query OpenWeather direct geocoding API
+    const geoUrl = `http://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(query)}&limit=10&appid=${API_KEY}`;
+    const response = await fetch(geoUrl);
+    
+    let locations = [];
+    if (response.ok) {
+      const data = await response.json();
+      if (Array.isArray(data)) {
+        locations = data.map(item => ({
+          city: item.name,
+          state: item.state || '',
+          country: item.country || '',
+          lat: item.lat,
+          lon: item.lon,
+          displayName: `${item.name}${item.state ? ', ' + item.state : ''}${item.country ? ' (' + item.country + ')' : ''}`
+        }));
+      }
+    }
+
+    setCache(cacheKey, locations);
+    res.json({ success: true, count: locations.length, locations });
+  } catch (err) {
+    console.error('Geocoding search error:', err.message);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// -------------------------------------------------------------------
+// GET /api/weather/reverse?lat=12.97&lon=77.59
+// Reverse-geocodes GPS coordinates into city & state
+// -------------------------------------------------------------------
+router.get('/reverse', async (req, res) => {
+  try {
+    const { lat, lon } = req.query;
+    if (!lat || !lon) {
+      return res.status(400).json({ success: false, message: 'Provide ?lat= and ?lon=' });
+    }
+
+    const cacheKey = `reverse:${parseFloat(lat).toFixed(3)},${parseFloat(lon).toFixed(3)}`;
+    const cached = getCached(cacheKey);
+    if (cached) return res.json({ success: true, source: 'cache', ...cached });
+
+    const reverseUrl = `http://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${API_KEY}`;
+    const response = await fetch(reverseUrl);
+    if (response.ok) {
+      const data = await response.json();
+      if (Array.isArray(data) && data.length > 0) {
+        const item = data[0];
+        const result = {
+          city: item.name,
+          state: item.state || '',
+          country: item.country || '',
+          lat: item.lat,
+          lon: item.lon,
+          displayName: `${item.name}${item.state ? ', ' + item.state : ''}${item.country ? ' (' + item.country + ')' : ''}`
+        };
+        setCache(cacheKey, result);
+        return res.json({ success: true, ...result });
+      }
+    }
+    res.status(404).json({ success: false, message: 'Location not resolved' });
+  } catch (err) {
+    console.error('Reverse geocode error:', err.message);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// -------------------------------------------------------------------
 // GET /api/weather/current?city=Bhubaneswar   OR   ?lat=19.8&lon=85.8
-// Returns real-time current weather for a city or coordinate pair.
+// Returns real-time current weather for any city or coordinate pair.
 // -------------------------------------------------------------------
 router.get('/current', async (req, res) => {
   try {
     const { city, lat, lon, fresh } = req.query;
-    let url;
-    if (lat && lon) {
-      url = `${BASE}/weather?lat=${lat}&lon=${lon}&units=metric&appid=${API_KEY}`;
-    } else if (city) {
-      url = `${BASE}/weather?q=${encodeURIComponent(city)},IN&units=metric&appid=${API_KEY}`;
-    } else {
+    if (!lat && !lon && !city) {
       return res.status(400).json({ success: false, message: 'Provide ?city= or ?lat=&lon=' });
     }
 
-    const cacheKey = `current:${city || `${lat},${lon}`}`;
+    const cacheKey = `current:${city ? city.toLowerCase().trim() : `${lat},${lon}`}`;
     if (fresh !== 'true') {
       const cached = getCached(cacheKey);
       if (cached) return res.json({ success: true, source: 'cache', isRealTime: true, ...cached });
     }
 
-    const response = await fetch(url);
-    if (!response.ok) {
-      const errBody = await response.text();
-      return res.status(response.status).json({ success: false, message: errBody });
+    let response = null;
+    if (lat && lon) {
+      const url = `${BASE}/weather?lat=${lat}&lon=${lon}&units=metric&appid=${API_KEY}`;
+      response = await fetch(url);
+    } else if (city) {
+      const cleanCity = city.trim();
+      // Try exact query first
+      let url = `${BASE}/weather?q=${encodeURIComponent(cleanCity)}&units=metric&appid=${API_KEY}`;
+      response = await fetch(url);
+
+      // If not found and doesn't contain comma or country code, try with ,IN
+      if (!response.ok && !cleanCity.includes(',')) {
+        const inUrl = `${BASE}/weather?q=${encodeURIComponent(cleanCity)},IN&units=metric&appid=${API_KEY}`;
+        const inRes = await fetch(inUrl);
+        if (inRes.ok) response = inRes;
+      }
     }
+
+    if (!response || !response.ok) {
+      const errBody = response ? await response.text() : 'No response';
+      return res.status(response ? response.status : 404).json({ success: false, message: errBody });
+    }
+
     const data = await response.json();
     const liveRisk = calculateLiveRisk(data);
 
@@ -135,25 +233,35 @@ router.get('/current', async (req, res) => {
 router.get('/forecast', async (req, res) => {
   try {
     const { city, lat, lon, fresh } = req.query;
-    let url;
-    if (lat && lon) {
-      url = `${BASE}/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${API_KEY}`;
-    } else if (city) {
-      url = `${BASE}/forecast?q=${encodeURIComponent(city)},IN&units=metric&appid=${API_KEY}`;
-    } else {
+    if (!lat && !lon && !city) {
       return res.status(400).json({ success: false, message: 'Provide ?city= or ?lat=&lon=' });
     }
 
-    const cacheKey = `forecast:${city || `${lat},${lon}`}`;
+    const cacheKey = `forecast:${city ? city.toLowerCase().trim() : `${lat},${lon}`}`;
     if (fresh !== 'true') {
       const cached = getCached(cacheKey);
       if (cached) return res.json({ success: true, source: 'cache', isRealTime: true, ...cached });
     }
 
-    const response = await fetch(url);
-    if (!response.ok) {
-      const errBody = await response.text();
-      return res.status(response.status).json({ success: false, message: errBody });
+    let response = null;
+    if (lat && lon) {
+      const url = `${BASE}/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${API_KEY}`;
+      response = await fetch(url);
+    } else if (city) {
+      const cleanCity = city.trim();
+      let url = `${BASE}/forecast?q=${encodeURIComponent(cleanCity)}&units=metric&appid=${API_KEY}`;
+      response = await fetch(url);
+
+      if (!response.ok && !cleanCity.includes(',')) {
+        const inUrl = `${BASE}/forecast?q=${encodeURIComponent(cleanCity)},IN&units=metric&appid=${API_KEY}`;
+        const inRes = await fetch(inUrl);
+        if (inRes.ok) response = inRes;
+      }
+    }
+
+    if (!response || !response.ok) {
+      const errBody = response ? await response.text() : 'No response';
+      return res.status(response ? response.status : 404).json({ success: false, message: errBody });
     }
     const data = await response.json();
 
@@ -231,17 +339,22 @@ router.get('/multi', async (req, res) => {
     const { cities, fresh } = req.query;
     if (!cities) return res.status(400).json({ success: false, message: 'Provide ?cities=City1,City2,...' });
 
-    const cityList = cities.split(',').map(c => c.trim()).filter(Boolean).slice(0, 30);
+    const cityList = cities.split(',').map(c => c.trim()).filter(Boolean).slice(0, 120);
     const results = await Promise.all(cityList.map(async (city) => {
-      const cacheKey = `current:${city}`;
+      const cacheKey = `current:${city.toLowerCase()}`;
       if (fresh !== 'true') {
         let cached = getCached(cacheKey);
         if (cached) return cached;
       }
 
       try {
-        const url = `${BASE}/weather?q=${encodeURIComponent(city)},IN&units=metric&appid=${API_KEY}`;
-        const response = await fetch(url);
+        const cleanCity = city.trim();
+        let url = `${BASE}/weather?q=${encodeURIComponent(cleanCity)}&units=metric&appid=${API_KEY}`;
+        let response = await fetch(url);
+        if (!response.ok && !cleanCity.includes(',')) {
+          response = await fetch(`${BASE}/weather?q=${encodeURIComponent(cleanCity)},IN&units=metric&appid=${API_KEY}`);
+        }
+
         if (response.ok) {
           const data = await response.json();
           const liveRisk = calculateLiveRisk(data);
@@ -283,21 +396,36 @@ router.get('/multi', async (req, res) => {
 });
 
 // -------------------------------------------------------------------
-// GET /api/weather/live-alerts
+// GET /api/weather/live-alerts?city=Bengaluru
 // Dynamically generates disaster & weather hazard alerts strictly from real-time OpenWeather readings across India!
 // -------------------------------------------------------------------
 router.get('/live-alerts', async (req, res) => {
   try {
+    const { city: targetCity } = req.query;
     const keyIndianHubs = [
       'Bhubaneswar', 'Puri', 'Cuttack', 'Kolkata', 'Mumbai', 
-      'Chennai', 'Jaipur', 'Patna', 'Delhi', 'Guwahati', 'Hyderabad'
+      'Chennai', 'Jaipur', 'Patna', 'Delhi', 'Guwahati', 'Hyderabad',
+      'Bengaluru', 'Pune', 'Ahmedabad', 'Lucknow', 'Srinagar', 
+      'Shimla', 'Kochi', 'Visakhapatnam', 'Bhopal', 'Raipur', 'Ranchi'
     ];
 
+    // Ensure the requested user city is included first if specified
+    const hubSet = new Set();
+    if (targetCity && targetCity.trim()) {
+      hubSet.add(targetCity.trim());
+    }
+    keyIndianHubs.forEach(h => hubSet.add(h));
+    const hubsToQuery = Array.from(hubSet).slice(0, 25);
+
     const alerts = [];
-    const weatherData = await Promise.all(keyIndianHubs.map(async (city) => {
+    const weatherData = await Promise.all(hubsToQuery.map(async (city) => {
       try {
-        const url = `${BASE}/weather?q=${encodeURIComponent(city)},IN&units=metric&appid=${API_KEY}`;
-        const r = await fetch(url);
+        const cleanCity = city.trim();
+        let url = `${BASE}/weather?q=${encodeURIComponent(cleanCity)}&units=metric&appid=${API_KEY}`;
+        let r = await fetch(url);
+        if (!r.ok && !cleanCity.includes(',')) {
+          r = await fetch(`${BASE}/weather?q=${encodeURIComponent(cleanCity)},IN&units=metric&appid=${API_KEY}`);
+        }
         if (r.ok) return await r.json();
       } catch {}
       return null;

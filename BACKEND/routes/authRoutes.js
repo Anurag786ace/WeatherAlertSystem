@@ -142,8 +142,8 @@ router.post('/register', async (req, res) => {
 
       return res.status(201).json({
         success: true,
-        message: 'User successfully registered and saved to MongoDB!',
-        storage: 'MONGODB_LOCAL',
+        message: 'User successfully registered!',
+        storage: 'SECURE_STORE',
         token,
         user: userResponse
       });
@@ -236,8 +236,8 @@ router.post('/login', async (req, res) => {
 
       return res.json({
         success: true,
-        message: 'Login successful! Verified against MongoDB.',
-        storage: 'MONGODB_LOCAL',
+        message: 'Login successful!',
+        storage: 'SECURE_STORE',
         token,
         user: userResponse
       });
@@ -344,7 +344,7 @@ router.get('/users', async (req, res) => {
       return res.json({
         success: true,
         count: users.length,
-        storage: 'MONGODB_LOCAL (mongodb://localhost:27017/resona_db)',
+        storage: 'SECURE_STORE',
         users
       });
     }
@@ -412,8 +412,8 @@ router.post('/seed-demo', async (req, res) => {
       }
       return res.json({
         success: true,
-        message: `Seeded ${createdCount} demonstration accounts in MongoDB!`,
-        mongoUri: 'mongodb://localhost:27017/resona_db'
+        message: `Seeded ${createdCount} demonstration accounts!`,
+        storage: 'SECURE_STORE'
       });
     }
 

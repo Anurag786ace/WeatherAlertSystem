@@ -642,19 +642,19 @@ export default function App() {
                 <div className="weather-card p-5 rounded-2xl max-w-2xl space-y-4">
                   <div className="p-3.5 rounded-xl bg-[#0B132B] border border-white/10 space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-white font-sans">MongoDB data store</span>
+                      <span className="text-xs font-medium text-white font-sans">Emergency Personnel Directory</span>
                       <span className="text-xs font-sans text-emerald-400 bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-500/20 font-medium">
-                        Connected
+                        Operational
                       </span>
                     </div>
-                    <p className="text-[11px] font-mono text-slate-400">
-                      mongodb://localhost:27017/resona_db
+                    <p className="text-[11px] text-slate-400 font-sans">
+                      Encrypted registry of certified field responders, nodal coordinators, and relief volunteers.
                     </p>
                     <button
                       onClick={() => handleOpenAuth('database')}
-                      className="text-xs text-cyan-400 hover:underline font-sans cursor-pointer"
+                      className="text-xs text-cyan-400 hover:underline font-sans cursor-pointer flex items-center gap-1"
                     >
-                      Inspect database users collection →
+                      View responder directory →
                     </button>
                   </div>
 
