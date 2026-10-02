@@ -280,6 +280,63 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// POST /api/auth/quick-login (Fast emergency authentication by userId, email, or phone)
+router.post('/quick-login', async (req, res) => {
+  try {
+    const { userId, email, phone } = req.body;
+    let user = null;
+
+    if (mongoose.connection.readyState === 1) {
+      if (userId) {
+        user = await User.findById(userId).catch(() => null);
+      }
+      if (!user && email) {
+        user = await User.findOne({ email: email.toLowerCase().trim() });
+      }
+      if (!user && phone) {
+        user = await User.findOne({ phone: phone.trim() });
+      }
+    }
+
+    if (!user) {
+      // In-Memory Search
+      const list = Array.from(memoryUsers.values());
+      user = list.find(u => 
+        (userId && (u._id === userId || u.id === userId)) ||
+        (email && u.email?.toLowerCase().trim() === email.toLowerCase().trim()) ||
+        (phone && u.phone?.trim() === phone.trim())
+      );
+    }
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Personnel record not found.'
+      });
+    }
+
+    user.lastLogin = new Date();
+    if (typeof user.save === 'function') await user.save();
+
+    const token = generateToken(user);
+    const userResponse = sanitizeUser(user);
+
+    return res.json({
+      success: true,
+      message: `Signed in as ${user.name || user.role || 'Personnel'}`,
+      storage: 'SECURE_STORE',
+      token,
+      user: userResponse
+    });
+  } catch (error) {
+    console.error('Quick login error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Server error occurred during quick login.'
+    });
+  }
+});
+
 // GET /api/auth/me
 router.get('/me', async (req, res) => {
   try {

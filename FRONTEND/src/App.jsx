@@ -16,8 +16,11 @@ import {
   CheckCircle2,
   Phone
 } from 'lucide-react';
-import { WeatherProvider } from './context/WeatherContext';
+import { WeatherProvider, useWeather } from './context/WeatherContext';
 import TopNavbar, { INDIAN_LOCATIONS } from './components/TopNavbar';
+import SimulationDrillBar from './components/SimulationDrillBar';
+import ShelterNavigator from './components/ShelterNavigator';
+import SitrepModal from './components/SitrepModal';
 import Sidebar from './components/Sidebar';
 import AlertBannerRow from './components/AlertBannerRow';
 import IndiaDisasterMap from './components/IndiaDisasterMap';
@@ -167,6 +170,7 @@ export default function App() {
   // Modals state
   const [isSafetyModalOpen, setIsSafetyModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isSitrepModalOpen, setIsSitrepModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState('login');
   const [emergencyModeActive, setEmergencyModeActive] = useState(true);
@@ -190,7 +194,7 @@ export default function App() {
 
   const handleDownloadAlerts = () => {
     sound.playSuccessChime();
-    window.print();
+    setIsSitrepModalOpen(true);
   };
 
   const handleShareLocation = () => {
@@ -210,7 +214,7 @@ export default function App() {
   };
 
   return (
-    <WeatherProvider city={currentLocation.city}>
+    <WeatherProvider city={currentLocation.city} onCityChange={setCurrentLocation}>
       <div className="min-h-screen text-slate-100 flex flex-col font-sans selection:bg-[#38BDF8]/30 selection:text-[#38BDF8] relative overflow-x-hidden bg-[#070D1E]">
         
         {/* Dynamic High-Resolution Wallpaper Background Layer */}
@@ -264,6 +268,9 @@ export default function App() {
           emergencyModeActive={emergencyModeActive}
           onToggleEmergencyMode={() => setEmergencyModeActive(!emergencyModeActive)}
         />
+
+        {/* 1.1 Interactive Disaster Drill Simulation Bar */}
+        <SimulationDrillBarContainer />
 
         {/* 2. Main Layout Body with Left Sidebar & Content Canvas */}
         <div className="flex-1 flex max-w-[1720px] w-full mx-auto">
@@ -504,18 +511,18 @@ export default function App() {
                   <div className="weather-card p-5 rounded-2xl flex flex-col justify-between">
                     <div>
                       <div className="w-10 h-10 rounded-xl bg-teal-600/15 border border-teal-500/30 text-teal-400 flex items-center justify-center mb-3">
-                        <Download className="w-5 h-5 stroke-[1.8]" />
+                        <FileText className="w-5 h-5 stroke-[1.8]" />
                       </div>
-                      <h3 className="font-semibold text-white text-sm font-sans">Download bulletin</h3>
+                      <h3 className="font-semibold text-white text-sm font-sans">Official Situation Report (SITREP)</h3>
                       <p className="text-xs text-slate-300 mt-1 leading-relaxed font-sans">
-                        Save a formatted PDF summary of all active warnings to keep on hand offline.
+                        Generate and export an official NDMA-standard disaster briefing with live meteorological telemetry, shelter status, and dispatch logs.
                       </p>
                     </div>
                     <button
                       onClick={handleDownloadAlerts}
-                      className="mt-4 py-2.5 px-4 bg-white/10 hover:bg-white/15 text-white font-medium text-xs rounded-xl transition-all border border-white/10 flex items-center justify-center gap-2 cursor-pointer"
+                      className="mt-4 py-2.5 px-4 bg-teal-600 hover:bg-teal-500 text-white font-medium text-xs rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
                     >
-                      <Download className="w-4 h-4 stroke-[1.8]" /> Download summary
+                      <FileText className="w-4 h-4 stroke-[1.8]" /> Generate Official SITREP
                     </button>
                   </div>
 
@@ -547,10 +554,10 @@ export default function App() {
                   <div>
                     <h2 className="text-base sm:text-lg font-semibold text-white tracking-normal flex items-center gap-2 font-sans">
                       <Layers className="w-5 h-5 text-teal-400 stroke-[1.8]" />
-                      <span>Shelters & emergency helplines</span>
+                      <span>Shelters & Safe Evacuation Corridors</span>
                     </h2>
                     <p className="text-xs text-slate-300 mt-0.5 font-sans">
-                      Nearby certified cyclone shelters, medical response contacts, and essential supplies checklist.
+                      Certified high-elevation cyclone complexes, real-time occupancy gauges, emergency supplies, and turn-by-turn safe routes.
                     </p>
                   </div>
                   <button
@@ -561,58 +568,38 @@ export default function App() {
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Emergency Helplines */}
-                  <div className="weather-card p-5 rounded-2xl space-y-3">
-                    <h3 className="text-xs font-semibold text-white font-sans flex items-center gap-2">
-                      <PhoneCall className="w-4 h-4 text-emerald-400 stroke-[1.8]" />
-                      <span>National emergency helplines (24x7)</span>
-                    </h3>
-                    <div className="space-y-2 text-xs font-sans">
-                      {[
-                        { label: 'NDMA central control room', num: '1070', desc: 'National Disaster Management Toll-Free' },
-                        { label: 'NDRF disaster response force', num: '1078', desc: 'Search and Rescue Dispatch' },
-                        { label: 'All-in-one emergency responder', num: '112', desc: 'Police, Fire, Ambulance' },
-                        { label: 'Medical emergency & trauma', num: '108', desc: 'Government Ambulance Dispatch' },
-                        { label: 'Indian coast guard SAR', num: '1554', desc: 'Maritime & Sea Rescue' },
-                      ].map((h) => (
-                        <div key={h.num} className="p-2.5 rounded-xl bg-[#0D162E]/70 border border-white/10 flex items-center justify-between">
-                          <div>
-                            <span className="font-medium text-white block">{h.label}</span>
-                            <span className="text-[11px] text-slate-400">{h.desc}</span>
-                          </div>
-                          <a href={`tel:${h.num}`} className="text-teal-300 font-semibold text-sm hover:underline bg-teal-950/60 px-2.5 py-1 rounded-lg border border-teal-500/20">
-                            {h.num}
-                          </a>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                {/* Dynamic Shelter Navigator Component */}
+                <ShelterNavigator 
+                  currentCity={currentLocation.city} 
+                  currentState={currentLocation.state}
+                  coordinates={{ lat: currentLocation.lat, lon: currentLocation.lon }}
+                />
 
-                  {/* Multipurpose Cyclone Shelters Directory */}
-                  <div className="weather-card p-5 rounded-2xl space-y-3">
-                    <h3 className="text-xs font-semibold text-white font-sans flex items-center gap-2">
-                      <ShieldAlert className="w-4 h-4 text-teal-400 stroke-[1.8]" />
-                      <span>Certified coastal cyclone shelters</span>
-                    </h3>
-                    <div className="space-y-2 text-xs font-sans">
-                      {[
-                        { name: 'Puri District Multipurpose Cyclone Center', cap: '2,500 Capacity', dist: '1.2 km away', status: 'Open' },
-                        { name: 'Bhubaneswar EOC Community Center', cap: '1,800 Capacity', dist: '3.4 km away', status: 'Open' },
-                        { name: 'Paradip Port High-Elevation Pucca Shelter', cap: '3,200 Capacity', dist: '5.1 km away', status: 'Open' },
-                        { name: 'Ganjam Coastal Community Safe Complex', cap: '1,500 Capacity', dist: '7.8 km away', status: 'Open' },
-                      ].map((s) => (
-                        <div key={s.name} className="p-2.5 rounded-xl bg-[#0D162E]/70 border border-white/10 flex items-center justify-between">
-                          <div>
-                            <span className="font-medium text-white block">{s.name}</span>
-                            <span className="text-[11px] text-slate-400">{s.cap} • {s.dist}</span>
-                          </div>
-                          <span className="text-xs font-sans text-emerald-400 bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-500/20 font-medium">
-                            {s.status}
-                          </span>
+                {/* National Emergency Helplines (24x7) */}
+                <div className="weather-card p-5 rounded-2xl space-y-3">
+                  <h3 className="text-xs font-semibold text-white font-sans flex items-center gap-2">
+                    <PhoneCall className="w-4 h-4 text-emerald-400 stroke-[1.8]" />
+                    <span>National Emergency Disaster Helplines (24x7 Toll-Free)</span>
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 text-xs font-sans">
+                    {[
+                      { label: 'NDMA Central Control Room', num: '1070', desc: 'National Disaster Management Toll-Free' },
+                      { label: 'NDRF Disaster Response Force', num: '1078', desc: 'Search and Rescue Dispatch' },
+                      { label: 'All-in-One Emergency Responder', num: '112', desc: 'Police, Fire, Ambulance' },
+                      { label: 'Medical Emergency & Trauma', num: '108', desc: 'Government Ambulance Dispatch' },
+                      { label: 'Indian Coast Guard SAR', num: '1554', desc: 'Maritime & Sea Rescue' },
+                      { label: 'State EOC Control Helpline', num: '1077', desc: 'State Emergency Operations Room' }
+                    ].map((h) => (
+                      <div key={h.num} className="p-2.5 rounded-xl bg-[#0D162E]/70 border border-white/10 flex items-center justify-between">
+                        <div>
+                          <span className="font-medium text-white block">{h.label}</span>
+                          <span className="text-[11px] text-slate-400">{h.desc}</span>
                         </div>
-                      ))}
-                    </div>
+                        <a href={`tel:${h.num}`} className="text-teal-300 font-semibold text-sm hover:underline bg-teal-950/60 px-2.5 py-1 rounded-lg border border-teal-500/20">
+                          {h.num}
+                        </a>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -793,8 +780,52 @@ export default function App() {
           onClose={() => setContactModalState({ isOpen: false, contact: null, defaultMessage: '' })}
         />
 
+        {/* Official Situation Report (SITREP) Modal */}
+        <SitrepModalContainer
+          isOpen={isSitrepModalOpen}
+          onClose={() => setIsSitrepModalOpen(false)}
+          location={currentLocation}
+        />
+
         </div>
       </div>
     </WeatherProvider>
+  );
+}
+
+// Sub-components to cleanly access WeatherContext inside WeatherProvider
+function SimulationDrillBarContainer() {
+  const { 
+    isSimulating, 
+    currentScenario, 
+    simulationStepIndex, 
+    startSimulation, 
+    stopSimulation, 
+    selectScenario, 
+    selectStep 
+  } = useWeather();
+
+  return (
+    <SimulationDrillBar
+      isSimulating={isSimulating}
+      currentScenario={currentScenario}
+      stepIndex={simulationStepIndex}
+      onStartSimulation={startSimulation}
+      onStopSimulation={stopSimulation}
+      onSelectScenario={selectScenario}
+      onSelectStep={selectStep}
+    />
+  );
+}
+
+function SitrepModalContainer({ isOpen, onClose, location }) {
+  const weather = useWeather();
+  return (
+    <SitrepModal
+      isOpen={isOpen}
+      onClose={onClose}
+      weatherData={weather}
+      location={location}
+    />
   );
 }

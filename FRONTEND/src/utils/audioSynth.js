@@ -130,6 +130,32 @@ class SoundFX {
     });
   }
 
+  // Tactical Alert Chime (Harmonic triple pulse)
+  playAlertChime() {
+    if (this.isMuted) return;
+    this.init();
+    if (!this.ctx) return;
+
+    const chords = [440, 554.37, 659.25]; // A4, C#5, E5
+    chords.forEach((freq) => {
+      try {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+
+        gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.4);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.4);
+      } catch {}
+    });
+  }
+
   // Text-To-Speech reader using Web Speech API
   speakText(text, langCode = 'hi') {
     if (typeof window === 'undefined' || !window.speechSynthesis) return;

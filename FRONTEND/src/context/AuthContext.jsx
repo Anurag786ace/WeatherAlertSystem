@@ -121,9 +121,46 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Quick Demo Login for testing
-  const quickLogin = async (email, password = 'Password123!') => {
-    return await login(email, password);
+  // Quick Demo Login for testing and emergency personnel roster
+  const quickLogin = async (identifierOrPayload, password = 'Password123!') => {
+    try {
+      let body;
+      if (typeof identifierOrPayload === 'object' && identifierOrPayload !== null) {
+        body = identifierOrPayload;
+      } else if (typeof identifierOrPayload === 'string') {
+        if (identifierOrPayload.includes('@')) {
+          body = { email: identifierOrPayload };
+        } else if (identifierOrPayload.startsWith('+') || /^\d+$/.test(identifierOrPayload)) {
+          body = { phone: identifierOrPayload };
+        } else {
+          body = { userId: identifierOrPayload };
+        }
+      } else {
+        body = { email: 'commander@resona.gov.in' };
+      }
+
+      const res = await fetch('/api/auth/quick-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        // Fallback to standard login
+        return await login(body.email || identifierOrPayload, password);
+      }
+
+      setToken(data.token);
+      setCurrentUser(data.user);
+      localStorage.setItem(AUTH_STORAGE_KEY, data.token);
+      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(data.user));
+
+      await fetchMongoUsers();
+      return { success: true, user: data.user, message: data.message };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
   };
 
   // Logout handler

@@ -86,24 +86,38 @@ export default function AuthPage({ onNavigateToTab, onOpenSafety }) {
     } catch {}
   };
 
-  const handleQuickLogin = async (email, password = 'Password123!') => {
+  const handleQuickLogin = async (userOrIdentifier, password = 'Password123!') => {
     setErrorMsg('');
     setSuccessMsg('');
-    setQuickLoginClicked(email);
+    let key;
+    let payload;
+    if (typeof userOrIdentifier === 'object' && userOrIdentifier !== null) {
+      key = userOrIdentifier._id || userOrIdentifier.id || userOrIdentifier.email || userOrIdentifier.phone;
+      payload = {
+        userId: userOrIdentifier._id || userOrIdentifier.id,
+        email: userOrIdentifier.email,
+        phone: userOrIdentifier.phone
+      };
+    } else {
+      key = userOrIdentifier;
+      payload = userOrIdentifier;
+    }
+
+    setQuickLoginClicked(key);
     setLoading(true);
     sound.playBlip();
 
     // brief visual ripple before auth transition
-    await new Promise(r => setTimeout(r, 260));
+    await new Promise(r => setTimeout(r, 200));
 
-    const res = await quickLogin(email, password);
+    const res = await quickLogin(payload, password);
     setLoading(false);
     setQuickLoginClicked(null);
 
     if (res.success) {
       sound.playSuccessChime();
       triggerConfetti();
-      setSuccessMsg(`Authenticated successfully as ${res.user.name} (${res.user.role})`);
+      setSuccessMsg(`Authenticated successfully as ${res.user.name || res.user.role} (${res.user.role})`);
     } else {
       setErrorMsg(res.error || 'Login failed. Please check credentials.');
     }
@@ -852,10 +866,12 @@ export default function AuthPage({ onNavigateToTab, onOpenSafety }) {
           <Database className="w-4 h-4 text-cyan-400 stroke-[1.8]" />
           <span>Need official state command access?</span>
           <button
-            onClick={() => handleQuickLogin('commander@resona.gov.in', 'Password123!')}
+            type="button"
+            onClick={() => handleQuickLogin({ email: 'commander@resona.gov.in' }, 'Password123!')}
+            disabled={loading}
             className="text-cyan-300 hover:text-cyan-200 font-medium hover:underline flex items-center gap-1 cursor-pointer"
           >
-            <span>Sign in as Commander Arjun Patel</span>
+            <span>{quickLoginClicked === 'commander@resona.gov.in' ? 'Authenticating...' : 'Sign in as Commander Arjun Patel'}</span>
             <span className="px-2 py-0.5 rounded-full text-[10px] font-sans font-medium bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">Command Officer</span>
             <span>→</span>
           </button>
@@ -914,6 +930,32 @@ export default function AuthPage({ onNavigateToTab, onOpenSafety }) {
             </button>
           </div>
         </div>
+
+        {/* Real-time Session & Alert Banner inside Directory */}
+        {successMsg && (
+          <div className="p-3 rounded-xl bg-emerald-950/70 border border-emerald-500/40 text-emerald-200 text-xs flex items-center justify-between gap-2 animate-in fade-in">
+            <span className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              <strong>{successMsg}</strong>
+            </span>
+            {onNavigateToTab && (
+              <button
+                type="button"
+                onClick={() => onNavigateToTab('dashboard')}
+                className="px-2.5 py-1 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-medium text-[11px] border border-emerald-500/30 cursor-pointer"
+              >
+                Go to Dashboard →
+              </button>
+            )}
+          </div>
+        )}
+
+        {errorMsg && (
+          <div className="p-3 rounded-xl bg-rose-950/70 border border-rose-500/40 text-rose-200 text-xs flex items-center gap-2 animate-in fade-in">
+            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+            <span>{errorMsg}</span>
+          </div>
+        )}
 
         {/* Database Search & Filter */}
         {isDbViewerOpen && (
@@ -1012,14 +1054,29 @@ export default function AuthPage({ onNavigateToTab, onOpenSafety }) {
                             SMS
                           </button>
                         )}
-                        <button
-                          type="button"
-                          onClick={() => handleQuickLogin(u.email, 'Password123!')}
-                          className="px-2 py-0.5 rounded bg-white/[0.06] hover:bg-white/10 text-white text-[10px] font-sans cursor-pointer"
-                          title="Quick Login as this user"
-                        >
-                          Sign in
-                        </button>
+                        {currentUser && (currentUser.email === u.email || currentUser._id === (u._id || u.id)) ? (
+                          <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-medium font-sans flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            Active
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleQuickLogin(u)}
+                            disabled={loading}
+                            className="px-2.5 py-1 rounded bg-white/[0.08] hover:bg-cyan-500/25 hover:text-cyan-200 text-white text-[10px] font-sans font-medium border border-white/10 hover:border-cyan-400/40 transition-all cursor-pointer flex items-center gap-1 disabled:opacity-50"
+                            title="Quick Login as this user"
+                          >
+                            {quickLoginClicked === (u._id || u.id || u.email || u.phone) ? (
+                              <>
+                                <span className="w-2.5 h-2.5 border-2 border-cyan-300 border-t-transparent rounded-full animate-spin" />
+                                <span>Signing in...</span>
+                              </>
+                            ) : (
+                              <span>Sign in</span>
+                            )}
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
