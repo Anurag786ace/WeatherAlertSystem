@@ -22,6 +22,14 @@ import {
 
 export const WALLPAPER_PRESETS = [
   {
+    id: 'organic-moss-zenith',
+    name: 'Organic Moss & Earth Sanctuary',
+    tag: 'Signature Biomimetic 4K',
+    url: '/moss_hero_bg.jpg',
+    thumbnail: '/moss_hero_bg.jpg',
+    description: 'Lush sculptured green moss branch with warm atmospheric mist and deep earth charcoal palette.'
+  },
+  {
     id: 'cyclone-satellite',
     name: 'Supercyclone Orbital Vortex',
     tag: 'NASA / Satellite 8K',
@@ -47,11 +55,11 @@ export const WALLPAPER_PRESETS = [
   },
   {
     id: 'deep-space-navy',
-    name: 'Minimal Deep Cyber Navy',
+    name: 'Minimal Deep Earth Slate',
     tag: 'Clean Minimalist',
     url: '',
     thumbnail: '',
-    description: 'Original high-tech dark navy gradient mesh with subtle cyan and rose ambient glows.'
+    description: 'Clean dark slate gradient mesh with subtle botanical moss and gold ambient glows.'
   }
 ];
 
@@ -128,20 +136,20 @@ export default function WallpaperSelector({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
       
-      <div className="relative w-full max-w-3xl bg-[#090F24]/95 border border-[#1E2C4F] rounded-3xl shadow-[0_0_60px_rgba(0,0,0,0.85)] flex flex-col max-h-[92vh] overflow-hidden">
+      <div className="relative w-full max-w-3xl bg-[#141916]/98 border border-white/10 rounded-3xl shadow-[0_0_60px_rgba(0,0,0,0.85)] flex flex-col max-h-[92vh] overflow-hidden">
         
         {/* Glow Top Bar */}
-        <div className="h-1.5 w-full bg-gradient-to-r from-cyan-500 via-blue-600 to-rose-500" />
+        <div className="h-1.5 w-full bg-gradient-to-r from-emerald-500 via-[#4ade80] to-amber-500" />
 
         {/* Modal Header */}
-        <div className="p-4 sm:p-5 border-b border-[#1E2C4F] flex items-center justify-between bg-[#0B132B]/90">
+        <div className="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between bg-[#18211a]/95">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-cyan-500/20 to-blue-600/30 border border-cyan-400/40 flex items-center justify-center text-cyan-300 shadow-md">
-              <Camera className="w-5 h-5 text-cyan-400" />
+            <div className="w-10 h-10 rounded-2xl bg-white/[0.06] border border-white/10 flex items-center justify-center text-[#4ade80] shadow-md">
+              <Camera className="w-5 h-5 text-[#4ade80]" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-white tracking-wide">
+                <h3 className="text-base font-bold text-white tracking-wide font-sans">
                   Dynamic Atmospheric Wallpapers
                 </h3>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold flex items-center gap-1">
@@ -149,7 +157,7 @@ export default function WallpaperSelector({
                   PEXELS API CONNECTED
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-stone-400 mt-0.5 font-sans">
                 Automatically fetches fresh 4K weather and storm photographs on every visit or refresh.
               </p>
             </div>
@@ -393,14 +401,14 @@ export default function WallpaperSelector({
 
           {/* TAB 3: CUSTOM URL */}
           {activeTab === 'custom' && (
-            <div className="p-4 rounded-xl bg-[#0B132B] border border-[#1E2C4F] space-y-3">
+            <div className="p-4 rounded-xl bg-[#18211a] border border-white/10 space-y-3">
               <div className="flex items-center gap-2">
-                <LinkIcon className="w-4 h-4 text-cyan-400" />
+                <LinkIcon className="w-4 h-4 text-[#4ade80]" />
                 <label className="text-xs font-mono font-semibold text-white uppercase tracking-wider">
                   Paste Custom Pexels / Web Image URL
                 </label>
               </div>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-stone-400 font-sans">
                 Right-click any image on Pexels, Unsplash, or Pinterest & select "Copy image address", then paste it here:
               </p>
               
@@ -410,11 +418,11 @@ export default function WallpaperSelector({
                   value={customUrl}
                   onChange={(e) => setCustomUrl(e.target.value)}
                   placeholder="https://images.pexels.com/photos/... or https://images.unsplash.com/..."
-                  className="flex-1 bg-[#070D1E] border border-[#1E2C4F] focus:border-cyan-400 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 font-mono outline-none"
+                  className="flex-1 bg-[#141916] border border-white/10 focus:border-[#4ade80] rounded-xl px-3 py-2 text-xs text-white placeholder-stone-500 font-mono outline-none"
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-md shrink-0"
+                  className="px-4 py-2 bg-[#4ade80] hover:bg-emerald-400 text-stone-950 font-bold text-xs rounded-xl transition-all shadow-md shrink-0 cursor-pointer"
                 >
                   Apply Image
                 </button>
@@ -424,15 +432,15 @@ export default function WallpaperSelector({
           )}
 
           {/* Dimming & Contrast Slider */}
-          <div className="p-3.5 rounded-xl bg-[#0B132B] border border-[#1E2C4F] space-y-2">
+          <div className="p-3.5 rounded-xl bg-[#18211a] border border-white/10 space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Sliders className="w-4 h-4 text-[#38BDF8]" />
+                <Sliders className="w-4 h-4 text-[#4ade80]" />
                 <span className="text-xs font-mono font-semibold text-white uppercase tracking-wider">
                   Glass Contrast & Dimming Overlay
                 </span>
               </div>
-              <span className="text-xs font-mono font-bold text-cyan-300">
+              <span className="text-xs font-mono font-bold text-[#4ade80]">
                 {Math.round(bgOpacity * 100)}% Darkness
               </span>
             </div>
@@ -443,9 +451,9 @@ export default function WallpaperSelector({
               step="0.02"
               value={bgOpacity}
               onChange={(e) => onChangeOpacity(parseFloat(e.target.value))}
-              className="w-full accent-cyan-400 cursor-pointer mt-1"
+              className="w-full accent-[#4ade80] cursor-pointer mt-1"
             />
-            <div className="flex justify-between text-[10px] font-mono text-slate-500">
+            <div className="flex justify-between text-[10px] font-mono text-stone-500">
               <span>Vibrant Photo (30%)</span>
               <span>Balanced Contrast (50%)</span>
               <span>Stealth Dark (90%)</span>
@@ -455,12 +463,12 @@ export default function WallpaperSelector({
         </div>
 
         {/* Footer with Active Wallpaper & Attribution */}
-        <div className="p-3 sm:p-4 border-t border-[#1E2C4F] bg-[#0B132B]/90 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div className="flex items-center gap-2 text-[11px] text-slate-300 truncate">
-            <span className="text-slate-400">Active:</span>
+        <div className="p-3 sm:p-4 border-t border-white/10 bg-[#18211a]/95 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-[11px] text-stone-300 truncate">
+            <span className="text-stone-400">Active:</span>
             <strong className="text-white truncate">{currentBg?.name || 'Default Wallpaper'}</strong>
             {currentBg?.photographer && (
-              <span className="text-cyan-400 font-mono text-[10px]">
+              <span className="text-[#4ade80] font-mono text-[10px]">
                 (Photo: {currentBg.photographer})
               </span>
             )}

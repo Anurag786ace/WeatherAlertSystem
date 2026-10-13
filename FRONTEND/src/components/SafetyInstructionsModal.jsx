@@ -146,7 +146,7 @@ export default function SafetyInstructionsModal({ isOpen, onClose }) {
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-1 px-4 sm:px-6 pt-3 border-b border-slate-800 bg-[#0B1327] overflow-x-auto">
+        <div className="flex items-center gap-1 px-4 sm:px-6 pt-3 border-b border-slate-800 bg-[#18211a] overflow-x-auto">
           <button
             onClick={() => setActiveTab('instructions')}
             className={`pb-2.5 px-3 text-xs font-medium whitespace-nowrap transition-all border-b-2 cursor-pointer ${
@@ -369,7 +369,7 @@ export default function SafetyInstructionsModal({ isOpen, onClose }) {
         </div>
 
         {/* Modal Footer */}
-        <div className="p-3 bg-[#0B1327] border-t border-slate-800 flex items-center justify-between text-xs text-slate-400 px-5">
+        <div className="p-3 bg-[#18211a] border-t border-slate-800 flex items-center justify-between text-xs text-slate-400 px-5">
           <span>NDMA National Disaster Control // Odisha Emergency Portal</span>
           <button
             onClick={onClose}

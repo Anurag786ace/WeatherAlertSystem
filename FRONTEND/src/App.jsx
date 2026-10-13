@@ -21,7 +21,6 @@ import TopNavbar, { INDIAN_LOCATIONS } from './components/TopNavbar';
 import SimulationDrillBar from './components/SimulationDrillBar';
 import ShelterNavigator from './components/ShelterNavigator';
 import SitrepModal from './components/SitrepModal';
-import Sidebar from './components/Sidebar';
 import AlertBannerRow from './components/AlertBannerRow';
 import IndiaDisasterMap from './components/IndiaDisasterMap';
 import ActiveAlertsList from './components/ActiveAlertsList';
@@ -215,29 +214,29 @@ export default function App() {
 
   return (
     <WeatherProvider city={currentLocation.city} onCityChange={setCurrentLocation}>
-      <div className="min-h-screen text-slate-100 flex flex-col font-sans selection:bg-[#38BDF8]/30 selection:text-[#38BDF8] relative overflow-x-hidden bg-[#070D1E]">
+      <div className="min-h-screen text-stone-100 flex flex-col font-sans selection:bg-[#4ade80]/30 selection:text-[#4ade80] relative overflow-x-hidden bg-[#141916]">
         
         {/* Dynamic High-Resolution Wallpaper Background Layer */}
         {currentBg?.url && (
           <div 
             key={currentBg.url}
-            className="fixed inset-0 bg-cover bg-center bg-no-repeat transition-all duration-1000 pointer-events-none z-0 scale-100 animate-in fade-in"
+            className="fixed inset-0 bg-cover bg-center bg-no-repeat transition-all duration-1000 pointer-events-none z-0 scale-100 animate-in fade-in opacity-40"
             style={{ backgroundImage: `url("${currentBg.url}")` }}
           />
         )}
 
-        {/* Dynamic Atmospheric Tint Overlay - Balances vivid wallpaper visibility with perfect UI readability */}
+        {/* Dynamic Atmospheric Tint Overlay */}
         {currentBg?.url && (
           <div 
             className="fixed inset-0 pointer-events-none z-0 transition-opacity duration-500"
             style={{ 
-              background: 'linear-gradient(180deg, rgba(7, 13, 30, 0.42) 0%, rgba(7, 13, 30, 0.70) 100%)',
+              background: 'linear-gradient(180deg, rgba(20, 25, 22, 0.45) 0%, rgba(20, 25, 22, 0.82) 100%)',
               backdropFilter: 'blur(1px)'
             }}
           />
         )}
 
-        {/* Ambient Aurora Gradient Mesh Motion Behind All Panels */}
+        {/* Ambient Botanical Gradient Mesh Motion Behind All Panels */}
         <div className="aurora-mesh-bg">
           <div className="aurora-orb-cyan" />
           <div className="aurora-orb-indigo" />
@@ -249,6 +248,11 @@ export default function App() {
 
         {/* 1. Top Modern Disaster Command Navbar */}
         <TopNavbar
+          activeTab={activeTab}
+          onSelectTab={(tabId) => {
+            sound.playBlip();
+            setActiveTab(tabId);
+          }}
           currentLocation={currentLocation}
           onSelectLocation={(loc) => {
             sound.playBlip();
@@ -272,21 +276,10 @@ export default function App() {
         {/* 1.1 Interactive Disaster Drill Simulation Bar */}
         <SimulationDrillBarContainer />
 
-        {/* 2. Main Layout Body with Left Sidebar & Content Canvas */}
-        <div className="flex-1 flex max-w-[1720px] w-full mx-auto">
-          
-          {/* Left Navigation Sidebar */}
-          <Sidebar
-            activeTab={activeTab}
-            onSelectTab={(tabId) => {
-              sound.playBlip();
-              setActiveTab(tabId);
-            }}
-            onOpenSafetyModal={handleOpenSafety}
-          />
-
-          {/* Right Main Dashboard Workspace (Driven by Tab Navigation) */}
-          <main className="flex-1 p-3.5 sm:p-5 lg:p-6 space-y-4 lg:space-y-5 overflow-x-hidden pb-20 md:pb-6">
+        {/* 2. Main Dashboard Content Canvas (Full Width) */}
+        <div className="flex-1 w-full max-w-[1720px] mx-auto">
+          {/* Main Dashboard Workspace (Driven by Tab Navigation) */}
+          <main className="w-full p-3.5 sm:p-5 lg:p-6 space-y-4 lg:space-y-5 overflow-x-hidden pb-20 md:pb-6">
             
             {/* VIEW 1: MAIN DASHBOARD (Only Map & Live Feed Cockpit, Clean & Uncluttered) */}
             {activeTab === 'dashboard' && (
@@ -339,56 +332,45 @@ export default function App() {
             {/* VIEW 2: VERNACULAR AI ALERT ENGINE */}
             {activeTab === 'multilingual' && (
               <div className="space-y-4 animate-page-enter">
-                <div className="flex items-center justify-between pb-3 border-b border-[#1E2C4F]/80 flex-wrap gap-2">
-                  <div>
-                    <h2 className="text-base sm:text-lg font-semibold text-white tracking-normal flex items-center gap-2 font-sans">
-                      <Globe className="w-5 h-5 text-cyan-400 stroke-[1.8]" />
-                      <span>Multilingual Voice & Community Safety</span>
-                    </h2>
-                    <p className="text-xs text-slate-300 mt-0.5 font-sans">
-                      Live weather advisories and spoken audio in 27 Indian mother tongues — helping families, elders, and neighbors stay safe together.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setActiveTab('dashboard')}
-                    className="px-3.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-xs font-medium text-slate-200 transition-colors flex items-center gap-1.5 border border-white/10 cursor-pointer"
-                  >
-                    <ArrowLeft className="w-3.5 h-3.5 text-slate-400" /> Back to dashboard
-                  </button>
-                </div>
-
                 <MultilingualAlertAI
                   currentLocation={currentLocation}
                   activeHazard={activeHazardFilter || 'cyclone'}
                   severity={currentLocation.risk === 'Very High' ? 'Extreme' : currentLocation.risk === 'High' ? 'Severe' : 'Moderate'}
                   onOpenAuthModal={handleOpenAuth}
                   onOpenReportModal={handleOpenReport}
+                  onReturnToDashboard={() => {
+                    sound.playBlip();
+                    setActiveTab('dashboard');
+                  }}
                 />
               </div>
             )}
 
             {/* VIEW 3: LIVE MAP (FULL-WIDTH IMMERSIVE) */}
             {activeTab === 'map' && (
-              <div className="space-y-4 animate-page-enter">
-                <div className="flex items-center justify-between pb-3 border-b border-[#1E2C4F]/80 flex-wrap gap-2">
+              <div className="space-y-5 animate-page-enter">
+                <div className="p-5 sm:p-6 rounded-3xl bg-[#141915]/85 border border-white/[0.08] backdrop-blur-xl flex items-center justify-between flex-wrap gap-4 shadow-xl">
                   <div>
-                    <h2 className="text-base sm:text-lg font-semibold text-white tracking-normal flex items-center gap-2 font-sans">
-                      <Map className="w-5 h-5 text-teal-400 stroke-[1.8]" />
-                      <span>Live interactive map</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#4ade80] block mb-1 font-sans">
+                      Geospatial Surveillance
+                    </span>
+                    <h2 className="text-xl sm:text-2xl font-bold text-white tracking-normal flex items-center gap-2.5 font-sans">
+                      <Map className="w-5 h-5 text-[#4ade80] stroke-[1.8]" />
+                      <span>Live Interactive Geospatial Map</span>
                     </h2>
-                    <p className="text-xs text-slate-300 mt-0.5 font-sans">
-                      Live weather observations, rain zones, and monitored oceanic storm tracks across India.
+                    <p className="text-xs text-stone-300 mt-1 font-sans">
+                      Live weather observations, rain zones, and monitored oceanic storm tracks across India and the Indian Ocean.
                     </p>
                   </div>
                   <button
                     onClick={() => setActiveTab('dashboard')}
-                    className="px-3.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-xs font-medium text-slate-200 transition-colors flex items-center gap-1.5 border border-white/10 cursor-pointer"
+                    className="px-4 py-2 rounded-full bg-white/[0.08] hover:bg-white/[0.15] text-xs font-semibold text-stone-200 transition-all flex items-center gap-2 border border-white/10 cursor-pointer shadow-sm hover:scale-105"
                   >
-                    <ArrowLeft className="w-3.5 h-3.5 text-slate-400" /> Back to dashboard
+                    <ArrowLeft className="w-3.5 h-3.5 text-stone-300" /> Return to Dashboard
                   </button>
                 </div>
 
-                <div className="w-full h-[720px] rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+                <div className="w-full h-[740px] rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
                   <IndiaDisasterMap
                     currentLocation={currentLocation}
                     onSelectAlertZone={(zone) => sound.playBlip()}
@@ -403,26 +385,29 @@ export default function App() {
 
             {/* VIEW 4: ALERTS & THREAT ASSESSMENT CENTER */}
             {activeTab === 'alerts' && (
-              <div className="space-y-4 animate-page-enter">
-                <div className="flex items-center justify-between pb-3 border-b border-[#1E2C4F]/80 flex-wrap gap-2">
+              <div className="space-y-5 animate-page-enter">
+                <div className="p-5 sm:p-6 rounded-3xl bg-[#141915]/85 border border-white/[0.08] backdrop-blur-xl flex items-center justify-between flex-wrap gap-4 shadow-xl">
                   <div>
-                    <h2 className="text-base sm:text-lg font-semibold text-white tracking-normal flex items-center gap-2 font-sans">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 block mb-1 font-sans">
+                      Early Warning Command
+                    </span>
+                    <h2 className="text-xl sm:text-2xl font-bold text-white tracking-normal flex items-center gap-2.5 font-sans">
                       <Bell className="w-5 h-5 text-amber-400 stroke-[1.8]" />
-                      <span>Alerts & regional safety</span>
+                      <span>Alerts & Regional Threat Assessment</span>
                     </h2>
-                    <p className="text-xs text-slate-300 mt-0.5 font-sans">
-                      Verified weather warnings, oceanic storm tracking, and plain-language community guidance.
+                    <p className="text-xs text-stone-300 mt-1 font-sans">
+                      Verified meteorological warnings, oceanic storm tracking, and plain-language community guidance.
                     </p>
                   </div>
                   <button
                     onClick={() => setActiveTab('dashboard')}
-                    className="px-3.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-xs font-medium text-slate-200 transition-colors flex items-center gap-1.5 border border-white/10 cursor-pointer"
+                    className="px-4 py-2 rounded-full bg-white/[0.08] hover:bg-white/[0.15] text-xs font-semibold text-stone-200 transition-all flex items-center gap-2 border border-white/10 cursor-pointer shadow-sm hover:scale-105"
                   >
-                    <ArrowLeft className="w-3.5 h-3.5 text-slate-400" /> Back to dashboard
+                    <ArrowLeft className="w-3.5 h-3.5 text-stone-300" /> Return to Dashboard
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
                   <div className="lg:col-span-7">
                     <ActiveAlertsList
                       currentLocation={currentLocation}
@@ -432,7 +417,7 @@ export default function App() {
                       onExplainInLanguage={() => setActiveTab('multilingual')}
                     />
                   </div>
-                  <div className="lg:col-span-5 flex flex-col gap-4">
+                  <div className="lg:col-span-5 flex flex-col gap-5">
                     <RiskLevelCard />
                     <RecentAlertsTimeline onSelectAlert={(a) => handleOpenSafety()} />
                   </div>
@@ -442,26 +427,29 @@ export default function App() {
 
             {/* VIEW 5: FORECAST & METEOROLOGICAL INTELLIGENCE */}
             {activeTab === 'forecast' && (
-              <div className="space-y-4 animate-page-enter">
-                <div className="flex items-center justify-between pb-3 border-b border-[#1E2C4F]/80 flex-wrap gap-2">
+              <div className="space-y-5 animate-page-enter">
+                <div className="p-5 sm:p-6 rounded-3xl bg-[#141915]/85 border border-white/[0.08] backdrop-blur-xl flex items-center justify-between flex-wrap gap-4 shadow-xl">
                   <div>
-                    <h2 className="text-base sm:text-lg font-semibold text-white tracking-normal flex items-center gap-2 font-sans">
-                      <CloudRain className="w-5 h-5 text-teal-400 stroke-[1.8]" />
-                      <span>Weather & 5-day forecast</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#4ade80] block mb-1 font-sans">
+                      Telemetry & Radar
+                    </span>
+                    <h2 className="text-xl sm:text-2xl font-bold text-white tracking-normal flex items-center gap-2.5 font-sans">
+                      <CloudRain className="w-5 h-5 text-[#4ade80] stroke-[1.8]" />
+                      <span>Meteorological Intelligence & 5-Day Outlook</span>
                     </h2>
-                    <p className="text-xs text-slate-300 mt-0.5 font-sans">
-                      Live weather observations and 5-day forecast for {currentLocation.city}, {currentLocation.state}.
+                    <p className="text-xs text-stone-300 mt-1 font-sans">
+                      Atmospheric observations, barometric trends, and multi-day telemetry for {currentLocation.city}, {currentLocation.state}.
                     </p>
                   </div>
                   <button
                     onClick={() => setActiveTab('dashboard')}
-                    className="px-3.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-xs font-medium text-slate-200 transition-colors flex items-center gap-1.5 border border-white/10 cursor-pointer"
+                    className="px-4 py-2 rounded-full bg-white/[0.08] hover:bg-white/[0.15] text-xs font-semibold text-stone-200 transition-all flex items-center gap-2 border border-white/10 cursor-pointer shadow-sm hover:scale-105"
                   >
-                    <ArrowLeft className="w-3.5 h-3.5 text-slate-400" /> Back to dashboard
+                    <ArrowLeft className="w-3.5 h-3.5 text-stone-300" /> Return to Dashboard
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                   <CurrentWeatherCard location={currentLocation} />
                   <ForecastCard />
                 </div>
@@ -470,101 +458,135 @@ export default function App() {
 
             {/* VIEW 6: DISASTER REPORTS */}
             {activeTab === 'reports' && (
-              <div className="space-y-4 animate-page-enter">
-                <div className="flex items-center justify-between pb-3 border-b border-[#1E2C4F]/80 flex-wrap gap-2">
+              <div className="space-y-5 animate-page-enter">
+                <div className="p-5 sm:p-6 rounded-3xl bg-[#141915]/85 border border-white/[0.08] backdrop-blur-xl flex items-center justify-between flex-wrap gap-4 shadow-xl">
                   <div>
-                    <h2 className="text-base sm:text-lg font-semibold text-white tracking-normal flex items-center gap-2 font-sans">
-                      <FileText className="w-5 h-5 text-teal-400 stroke-[1.8]" />
-                      <span>Citizen reports & community help</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#4ade80] block mb-1 font-sans">
+                      Last-Mile Coordination
+                    </span>
+                    <h2 className="text-xl sm:text-2xl font-bold text-white tracking-normal flex items-center gap-2.5 font-sans">
+                      <FileText className="w-5 h-5 text-[#4ade80] stroke-[1.8]" />
+                      <span>Citizen Reports & Rapid Response Dispatch</span>
                     </h2>
-                    <p className="text-xs text-slate-300 mt-0.5 font-sans">
-                      Report road blockages or power cuts, ask for assistance, or download safety bulletins.
+                    <p className="text-xs text-stone-300 mt-1 font-sans">
+                      Report ground obstacles, request medical or elder assistance, or generate certified situation reports.
                     </p>
                   </div>
                   <button
                     onClick={() => setActiveTab('dashboard')}
-                    className="px-3.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-xs font-medium text-slate-200 transition-colors flex items-center gap-1.5 border border-white/10 cursor-pointer"
+                    className="px-4 py-2 rounded-full bg-white/[0.08] hover:bg-white/[0.15] text-xs font-semibold text-stone-200 transition-all flex items-center gap-2 border border-white/10 cursor-pointer shadow-sm hover:scale-105"
                   >
-                    <ArrowLeft className="w-3.5 h-3.5 text-slate-400" /> Back to dashboard
+                    <ArrowLeft className="w-3.5 h-3.5 text-stone-300" /> Return to Dashboard
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="weather-card p-5 rounded-2xl flex flex-col justify-between">
+                {/* Signature Bento Grid Matching Reference GIF Style */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                  
+                  {/* Signature Light Stone Card (Directly from Reference GIF) */}
+                  <div className="bento-stone-card p-6 flex flex-col justify-between min-h-[260px] relative overflow-hidden group">
                     <div>
-                      <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center mb-3">
-                        <AlertTriangle className="w-5 h-5 stroke-[1.8]" />
-                      </div>
-                      <h3 className="font-semibold text-white text-sm font-sans">Report an issue or ask help</h3>
-                      <p className="text-xs text-slate-300 mt-1 leading-relaxed font-sans">
-                        Share ground observations such as waterlogged roads, fallen trees, or elder assistance needs with response teams.
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-stone-600 block mb-1 font-sans">
+                        About • Ground Hazard
+                      </span>
+                      <h3 className="text-lg font-bold text-stone-900 leading-snug font-sans">
+                        Report Issue or Ask Urgent Help
+                      </h3>
+                      <p className="text-xs text-stone-700 mt-2.5 leading-relaxed font-sans">
+                        Share geo-located ground observations such as waterlogged roads, fallen electricity poles, or elder distress directly with verified field responders.
                       </p>
                     </div>
-                    <button
-                      onClick={handleOpenReport}
-                      className="mt-4 py-2.5 px-4 bg-teal-600 hover:bg-teal-500 text-white font-medium text-xs rounded-xl transition-all shadow-md cursor-pointer"
-                    >
-                      Report issue now
-                    </button>
+
+                    <div className="flex items-center justify-between pt-5 mt-auto border-t border-stone-300/60">
+                      <button
+                        onClick={handleOpenReport}
+                        className="px-4 py-2 rounded-full bg-stone-900 hover:bg-stone-800 text-white font-semibold text-xs transition-transform hover:scale-105 cursor-pointer shadow-md"
+                      >
+                        Submit Citizen Report
+                      </button>
+                      <button
+                        onClick={handleOpenReport}
+                        className="w-9 h-9 rounded-full bg-white text-stone-950 flex items-center justify-center shadow-md hover:scale-110 transition-transform cursor-pointer"
+                        title="Submit Incident"
+                      >
+                        <AlertTriangle className="w-4 h-4 text-amber-600 stroke-[2.2]" />
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="weather-card p-5 rounded-2xl flex flex-col justify-between">
+                  {/* Frosted Bento Glass Card 2: SITREP Generator */}
+                  <div className="bento-glass-card p-6 flex flex-col justify-between min-h-[260px] relative overflow-hidden group">
                     <div>
-                      <div className="w-10 h-10 rounded-xl bg-teal-600/15 border border-teal-500/30 text-teal-400 flex items-center justify-center mb-3">
-                        <FileText className="w-5 h-5 stroke-[1.8]" />
-                      </div>
-                      <h3 className="font-semibold text-white text-sm font-sans">Official Situation Report (SITREP)</h3>
-                      <p className="text-xs text-slate-300 mt-1 leading-relaxed font-sans">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#4ade80] block mb-1 font-sans">
+                        Official Export
+                      </span>
+                      <h3 className="text-lg font-bold text-white leading-snug font-sans">
+                        Official Situation Report (SITREP)
+                      </h3>
+                      <p className="text-xs text-stone-300 mt-2.5 leading-relaxed font-sans">
                         Generate and export an official NDMA-standard disaster briefing with live meteorological telemetry, shelter status, and dispatch logs.
                       </p>
                     </div>
-                    <button
-                      onClick={handleDownloadAlerts}
-                      className="mt-4 py-2.5 px-4 bg-teal-600 hover:bg-teal-500 text-white font-medium text-xs rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                      <FileText className="w-4 h-4 stroke-[1.8]" /> Generate Official SITREP
-                    </button>
+
+                    <div className="pt-5 mt-auto border-t border-white/[0.08]">
+                      <button
+                        onClick={handleDownloadAlerts}
+                        className="w-full py-2.5 px-4 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] border border-white/10 text-white font-semibold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                      >
+                        <Download className="w-4 h-4 text-[#4ade80] stroke-[1.8]" /> Export Verified SITREP Briefing
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="weather-card p-5 rounded-2xl flex flex-col justify-between">
+                  {/* Frosted Bento Glass Card 3: Emergency Protocol */}
+                  <div className="bento-glass-card p-6 flex flex-col justify-between min-h-[260px] relative overflow-hidden group">
                     <div>
-                      <div className="w-10 h-10 rounded-xl bg-emerald-600/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mb-3">
-                        <ShieldAlert className="w-5 h-5 stroke-[1.8]" />
-                      </div>
-                      <h3 className="font-semibold text-white text-sm font-sans">Emergency safety guide</h3>
-                      <p className="text-xs text-slate-300 mt-1 leading-relaxed font-sans">
-                        Review NDMA and Odisha Disaster Management safety guidelines, evacuation steps, and shelter maps.
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 block mb-1 font-sans">
+                        Verified Guidelines
+                      </span>
+                      <h3 className="text-lg font-bold text-white leading-snug font-sans">
+                        Emergency Safety Guide & Evacuation
+                      </h3>
+                      <p className="text-xs text-stone-300 mt-2.5 leading-relaxed font-sans">
+                        Review NDMA and Odisha Disaster Management safety guidelines, evacuation steps, cyclone safe points, and family kits.
                       </p>
                     </div>
-                    <button
-                      onClick={handleOpenSafety}
-                      className="mt-4 py-2.5 px-4 bg-teal-600 hover:bg-teal-500 text-white font-medium text-xs rounded-xl transition-all shadow-md cursor-pointer"
-                    >
-                      View instructions
-                    </button>
+
+                    <div className="pt-5 mt-auto border-t border-white/[0.08]">
+                      <button
+                        onClick={handleOpenSafety}
+                        className="w-full py-2.5 px-4 rounded-xl bg-[#4ade80]/15 hover:bg-[#4ade80]/25 border border-[#4ade80]/30 text-[#4ade80] font-semibold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                      >
+                        <ShieldAlert className="w-4 h-4 stroke-[1.8]" /> View Verified Instructions
+                      </button>
+                    </div>
                   </div>
+
                 </div>
               </div>
             )}
 
             {/* VIEW 7: RESOURCES & SHELTERS */}
             {activeTab === 'resources' && (
-              <div className="space-y-4 animate-page-enter">
-                <div className="flex items-center justify-between pb-3 border-b border-[#1E2C4F]/80 flex-wrap gap-2">
+              <div className="space-y-5 animate-page-enter">
+                <div className="p-5 sm:p-6 rounded-3xl bg-[#141915]/85 border border-white/[0.08] backdrop-blur-xl flex items-center justify-between flex-wrap gap-4 shadow-xl">
                   <div>
-                    <h2 className="text-base sm:text-lg font-semibold text-white tracking-normal flex items-center gap-2 font-sans">
-                      <Layers className="w-5 h-5 text-teal-400 stroke-[1.8]" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#4ade80] block mb-1 font-sans">
+                      Safe Evacuation Logistics
+                    </span>
+                    <h2 className="text-xl sm:text-2xl font-bold text-white tracking-normal flex items-center gap-2.5 font-sans">
+                      <Layers className="w-5 h-5 text-[#4ade80] stroke-[1.8]" />
                       <span>Shelters & Safe Evacuation Corridors</span>
                     </h2>
-                    <p className="text-xs text-slate-300 mt-0.5 font-sans">
+                    <p className="text-xs text-stone-300 mt-1 font-sans">
                       Certified high-elevation cyclone complexes, real-time occupancy gauges, emergency supplies, and turn-by-turn safe routes.
                     </p>
                   </div>
                   <button
                     onClick={() => setActiveTab('dashboard')}
-                    className="px-3.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-xs font-medium text-slate-200 transition-colors flex items-center gap-1.5 border border-white/10 cursor-pointer"
+                    className="px-4 py-2 rounded-full bg-white/[0.08] hover:bg-white/[0.15] text-xs font-semibold text-stone-200 transition-all flex items-center gap-2 border border-white/10 cursor-pointer shadow-sm hover:scale-105"
                   >
-                    <ArrowLeft className="w-3.5 h-3.5 text-slate-400" /> Back to dashboard
+                    <ArrowLeft className="w-3.5 h-3.5 text-stone-300" /> Return to Dashboard
                   </button>
                 </div>
 
@@ -575,28 +597,59 @@ export default function App() {
                   coordinates={{ lat: currentLocation.lat, lon: currentLocation.lon }}
                 />
 
-                {/* National Emergency Helplines (24x7) */}
-                <div className="weather-card p-5 rounded-2xl space-y-3">
-                  <h3 className="text-xs font-semibold text-white font-sans flex items-center gap-2">
-                    <PhoneCall className="w-4 h-4 text-emerald-400 stroke-[1.8]" />
-                    <span>National Emergency Disaster Helplines (24x7 Toll-Free)</span>
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 text-xs font-sans">
+                {/* National Emergency Helplines (24x7) Styled as Calming Obsidian & Sage Grid */}
+                <div className="p-6 rounded-[28px] bg-gradient-to-r from-[#111622]/95 via-[#10141e]/95 to-[#131926]/95 border border-white/[0.08] space-y-4 shadow-xl backdrop-blur-xl relative overflow-hidden font-sans">
+                  {/* Soft Background Reassurance Glow */}
+                  <div className="absolute -top-12 -right-12 w-48 h-48 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+
+                  <div className="flex items-center justify-between pb-3.5 border-b border-white/[0.07] relative z-10">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-sm shrink-0">
+                        <PhoneCall className="w-4 h-4 stroke-[1.8]" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-bold text-white font-sans tracking-tight">
+                          National Emergency Disaster Helplines (24x7 Toll-Free)
+                        </h3>
+                        <p className="text-[11px] text-stone-300 font-sans">
+                          Direct phone connection to verified national, state, and rescue operators
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-[11px] font-semibold px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-sans flex items-center gap-1.5 shadow-sm shrink-0">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+                      </span>
+                      <span>Active 24x7</span>
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs font-sans relative z-10">
                     {[
+                      { label: 'Immediate Help (Police, Fire, Ambulance)', num: '112', desc: 'All-in-One National Emergency Desk' },
                       { label: 'NDMA Central Control Room', num: '1070', desc: 'National Disaster Management Toll-Free' },
-                      { label: 'NDRF Disaster Response Force', num: '1078', desc: 'Search and Rescue Dispatch' },
-                      { label: 'All-in-One Emergency Responder', num: '112', desc: 'Police, Fire, Ambulance' },
+                      { label: 'NDRF Disaster Response Force', num: '1078', desc: 'Emergency Search & Rescue Dispatch' },
                       { label: 'Medical Emergency & Trauma', num: '108', desc: 'Government Ambulance Dispatch' },
-                      { label: 'Indian Coast Guard SAR', num: '1554', desc: 'Maritime & Sea Rescue' },
-                      { label: 'State EOC Control Helpline', num: '1077', desc: 'State Emergency Operations Room' }
+                      { label: 'State EOC Control Helpline', num: '1077', desc: 'State Emergency Operations Room' },
+                      { label: 'Indian Coast Guard SAR', num: '1554', desc: 'Maritime & Coastal Water Rescue' }
                     ].map((h) => (
-                      <div key={h.num} className="p-2.5 rounded-xl bg-[#0D162E]/70 border border-white/10 flex items-center justify-between">
-                        <div>
-                          <span className="font-medium text-white block">{h.label}</span>
-                          <span className="text-[11px] text-slate-400">{h.desc}</span>
+                      <div 
+                        key={h.num} 
+                        className="p-3.5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] hover:border-emerald-500/30 transition-all duration-200 flex items-center justify-between group shadow-sm hover:-translate-y-0.5"
+                      >
+                        <div className="pr-2">
+                          <span className="font-semibold text-white block text-xs leading-snug">{h.label}</span>
+                          <span className="text-[11px] text-stone-400 mt-0.5 block">{h.desc}</span>
                         </div>
-                        <a href={`tel:${h.num}`} className="text-teal-300 font-semibold text-sm hover:underline bg-teal-950/60 px-2.5 py-1 rounded-lg border border-teal-500/20">
-                          {h.num}
+                        <a 
+                          href={`tel:${h.num}`} 
+                          onClick={() => sound?.playBlip?.()}
+                          className="text-emerald-300 hover:text-emerald-200 font-bold text-sm bg-emerald-500/15 hover:bg-emerald-500/25 px-3 py-1.5 rounded-xl border border-emerald-500/30 font-mono transition-all shrink-0 shadow-sm flex items-center gap-1.5 hover:scale-105 active:scale-95 cursor-pointer"
+                          title={`Tap to call ${h.label} (${h.num})`}
+                        >
+                          <Phone className="w-3 h-3 text-emerald-400" />
+                          <span>{h.num}</span>
                         </a>
                       </div>
                     ))}
@@ -607,57 +660,124 @@ export default function App() {
 
             {/* VIEW 8: SETTINGS & SYSTEM PREFERENCES */}
             {activeTab === 'settings' && (
-              <div className="space-y-4 animate-page-enter">
-                <div className="flex items-center justify-between pb-3 border-b border-[#1E2C4F]/80 flex-wrap gap-2">
+              <div className="space-y-5 animate-page-enter">
+                <div className="p-5 sm:p-6 rounded-3xl bg-[#141915]/85 border border-white/[0.08] backdrop-blur-xl flex items-center justify-between flex-wrap gap-4 shadow-xl">
                   <div>
-                    <h2 className="text-base sm:text-lg font-semibold text-white tracking-normal flex items-center gap-2 font-sans">
-                      <Settings className="w-5 h-5 text-slate-400 stroke-[1.8]" />
-                      <span>Settings & preferences</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block mb-1 font-sans">
+                      Platform Preferences
+                    </span>
+                    <h2 className="text-xl sm:text-2xl font-bold text-white tracking-normal flex items-center gap-2.5 font-sans">
+                      <Settings className="w-5 h-5 text-stone-400 stroke-[1.8]" />
+                      <span>Settings & Atmospheric Preferences</span>
                     </h2>
-                    <p className="text-xs text-slate-300 mt-0.5 font-sans">
-                      Preferences, data sync status, and audio notifications.
+                    <p className="text-xs text-stone-300 mt-1 font-sans">
+                      Photographic wallpaper rotation, acoustic telemetry alerts, and encrypted personnel registry.
                     </p>
                   </div>
                   <button
                     onClick={() => setActiveTab('dashboard')}
-                    className="px-3.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-xs font-medium text-slate-200 transition-colors flex items-center gap-1.5 border border-white/10 cursor-pointer"
+                    className="px-4 py-2 rounded-full bg-white/[0.08] hover:bg-white/[0.15] text-xs font-semibold text-stone-200 transition-all flex items-center gap-2 border border-white/10 cursor-pointer shadow-sm hover:scale-105"
                   >
-                    <ArrowLeft className="w-3.5 h-3.5 text-slate-400" /> Back to dashboard
+                    <ArrowLeft className="w-3.5 h-3.5 text-stone-300" /> Return to Dashboard
                   </button>
                 </div>
 
-                <div className="weather-card p-5 rounded-2xl max-w-2xl space-y-4">
-                  <div className="p-3.5 rounded-xl bg-[#0B132B] border border-white/10 space-y-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {/* Signature Bento Stone Card: Atmosphere & Wallpaper Controller */}
+                  <div className="bento-stone-card p-6 flex flex-col justify-between min-h-[220px] relative overflow-hidden">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-stone-600 block mb-1 font-sans">
+                        Atmospheric Visuals
+                      </span>
+                      <h3 className="text-lg font-bold text-stone-900 font-sans">
+                        Photographic Backdrop Control
+                      </h3>
+                      <p className="text-xs text-stone-700 mt-2 leading-relaxed font-sans">
+                        Curated 4K Pexels storm and nature photography. Automatic dynamic rotation on every visit with adjustable atmospheric overlay opacity.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-3 pt-5 mt-auto border-t border-stone-300/60">
+                      <button
+                        onClick={() => setIsWallpaperModalOpen(true)}
+                        className="px-4 py-2 rounded-full bg-stone-900 hover:bg-stone-800 text-white font-semibold text-xs transition-transform hover:scale-105 cursor-pointer shadow-md"
+                      >
+                        Adjust Atmosphere
+                      </button>
+                      <button
+                        onClick={handleShuffleWallpaper}
+                        className="px-3.5 py-2 rounded-full bg-stone-200 hover:bg-stone-300 text-stone-900 font-semibold text-xs transition-colors cursor-pointer"
+                        title="Shuffle Pexels Wallpaper"
+                      >
+                        Shuffle Now
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Bento Glass Card: Acoustic Synthesizer Test */}
+                  <div className="bento-glass-card p-6 flex flex-col justify-between min-h-[220px] relative overflow-hidden">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#4ade80] block mb-1 font-sans">
+                        Acoustic Warnings
+                      </span>
+                      <h3 className="text-lg font-bold text-white font-sans">
+                        Sound Alert Synthesizer
+                      </h3>
+                      <p className="text-xs text-stone-300 mt-2 leading-relaxed font-sans">
+                        Web Audio API synthesized multi-frequency alert tones engineered for high audibility in noisy outdoor environments without pre-recorded audio lag.
+                      </p>
+                    </div>
+
+                    <div className="pt-5 mt-auto border-t border-white/[0.08] flex items-center justify-between">
+                      <button
+                        onClick={() => sound.playWarningTones()}
+                        className="px-4 py-2 rounded-xl bg-[#4ade80]/15 hover:bg-[#4ade80]/25 border border-[#4ade80]/30 text-[#4ade80] font-semibold text-xs transition-all cursor-pointer"
+                      >
+                        Test Siren Tone
+                      </button>
+                      <button
+                        onClick={() => sound.playChime()}
+                        className="px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-stone-300 font-semibold text-xs transition-all cursor-pointer"
+                      >
+                        Test Chime
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Bento Glass Card: Encrypted Responder Registry */}
+                  <div className="bento-glass-card p-6 space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-white font-sans">Emergency Personnel Directory</span>
-                      <span className="text-xs font-sans text-emerald-400 bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-500/20 font-medium">
+                      <span className="text-xs font-bold text-white font-sans">Emergency Personnel Directory</span>
+                      <span className="text-[11px] font-sans text-[#4ade80] bg-[#4ade80]/15 px-2.5 py-0.5 rounded-full border border-[#4ade80]/30 font-semibold">
                         Operational
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-400 font-sans">
+                    <p className="text-xs text-stone-400 font-sans leading-relaxed">
                       Encrypted registry of certified field responders, nodal coordinators, and relief volunteers.
                     </p>
                     <button
                       onClick={() => handleOpenAuth('database')}
-                      className="text-xs text-cyan-400 hover:underline font-sans cursor-pointer flex items-center gap-1"
+                      className="text-xs text-[#4ade80] hover:underline font-semibold font-sans cursor-pointer flex items-center gap-1 pt-1"
                     >
                       View responder directory →
                     </button>
                   </div>
 
-                  <div className="p-3.5 rounded-xl bg-[#0B132B] border border-white/10 space-y-2">
-                    <span className="text-xs font-medium text-white block font-sans">Telemetry API feeds</span>
-                    <ul className="text-xs text-slate-300 space-y-1.5 font-sans">
-                      <li className="flex items-center justify-between">
+                  {/* Bento Glass Card: Telemetry API Feeds */}
+                  <div className="bento-glass-card p-6 space-y-3">
+                    <span className="text-xs font-bold text-white block font-sans">Telemetry API Feed Ingestion</span>
+                    <ul className="text-xs text-stone-300 space-y-2 font-sans">
+                      <li className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.02] border border-white/5">
                         <span>NASA Earth Observatory (EONET v3):</span>
-                        <span className="text-cyan-400 font-medium font-mono text-[11px]">Active live stream</span>
+                        <span className="text-[#4ade80] font-semibold font-mono text-[11px]">Active live stream</span>
                       </li>
-                      <li className="flex items-center justify-between">
+                      <li className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.02] border border-white/5">
                         <span>OpenWeatherMap sensor network:</span>
-                        <span className="text-cyan-400 font-medium font-mono text-[11px]">Real-time ingestion</span>
+                        <span className="text-[#4ade80] font-semibold font-mono text-[11px]">Real-time ingestion</span>
                       </li>
                     </ul>
                   </div>
+
                 </div>
               </div>
             )}

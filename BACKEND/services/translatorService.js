@@ -832,13 +832,13 @@ const VERNACULAR_TEMPLATES = {
 const VERNACULAR_LIVE_TERMS = {
   or: {
     station: 'ଭୁବନେଶ୍ୱର ପାଣିପାଗ କେନ୍ଦ୍ର ଲାଇଭ୍ ତଥ୍ୟ',
-    title: (city, temp, cond) => `${city} ରିଅଲ-ଟାଇମ୍ ପାଣିପାଗ ସ୍ଥିତି — ${temp}°C (${cond})`,
+    title: (city, temp, cond) => `${city} Weather Check: It's currently ${temp}°C with ${(cond || 'overcast').toLowerCase()} skies.`,
     threat: (city, temp, desc, wind, hum, rain) => `ଭୁବନେଶ୍ୱର ପାଣିପାଗ ବିଭାଗର ପ୍ରତ୍ୟକ୍ଷ ତଥ୍ୟ ଅନୁଯାୟୀ, ${city} ରେ ବର୍ତ୍ତମାନ ତାପମାତ୍ରା ${temp}°C ଏବଂ ${desc} ରହିଛି। ପବନର ବେଗ ଘଣ୍ଟାପ୍ରତି ${wind} କି.ମି. ଏବଂ ବାୟୁମଣ୍ଡଳୀୟ ଆର୍ଦ୍ରତା ${hum}% ରେକର୍ଡ କରାଯାଇଛି।${rain > 0 ? ` ବିଗତ ଏକ ଘଣ୍ଟାରେ ${rain} ମି.ମି. ବୃଷ୍ଟିପାତ ହୋଇଛି।` : ' ବର୍ତ୍ତମାନ ସ୍ଥିତି ସାଧାରଣ ଏବଂ ନିୟନ୍ତ୍ରଣାଧୀନ ଅଛି।' }`,
     steps: [
-      'ପ୍ରତ୍ୟକ୍ଷ ପାଣିପାଗ ବୁଲେଟିନ୍ ଏବଂ ତାଜା ତଥ୍ୟ ଉପରେ ନଜର ରଖନ୍ତୁ।',
-      'ଯଦି ହଠାତ୍ ପ୍ରବଳ ବର୍ଷା ବା ଝଡ଼ ପବନ ହୁଏ, ତେବେ ପକ୍କା ଛାତ ତଳେ ଆଶ୍ରୟ ନିଅନ୍ତୁ।',
-      'ବିଜୁଳି ଚମକିବା ସମୟରେ ବିଦ୍ୟୁତ୍ ଖୁଣ୍ଟ କିମ୍ବା ଉଚ୍ଚ ଗଛ ନିକଟରୁ ଦୂରେଇ ରୁହନ୍ତୁ।',
-      'ଜରୁରୀ ସହାୟତା ଏବଂ ପ୍ରଶ୍ନ ପାଇଁ ରାଜ୍ୟ ଡିଜାଷ୍ଟର କଣ୍ଟ୍ରୋଲ ରୁମ୍ ୧୧୨ / ୧୦୭୦ ଡାଏଲ କରନ୍ତୁ।'
+      'ପ୍ରତ୍ୟକ୍ଷ ପାଣିପାଗ ବୁଲେଟିନ୍ ଉପରେ ନଜର ରଖନ୍ତୁ ଏବଂ ପକ୍କା ଘରେ ସୁରକ୍ଷିତ ରୁହନ୍ତୁ।',
+      'ଯଦି ହଠାତ୍ ପ୍ରବଳ ବର୍ଷା ବା ଝଡ଼ ପବନ ହୁଏ, ତେବେ ପକ୍କା କୋଠାରେ ଆଶ୍ରୟ ନିଅନ୍ତୁ।',
+      'ବିଜୁଳି ଚମକିବା ସମୟରେ ବିଦ୍ୟୁତ୍ ଉପକରଣ ବନ୍ଦ କରନ୍ତୁ ଓ ବିପଦରୁ ଦୂରେଇ ରୁହନ୍ତୁ।',
+      'ପିଇବା ପାଣି, ଔଷଧ ଓ ଟର୍ଚ୍ଚ ଲାଇଟ୍ ପ୍ରସ୍ତୁତ ରଖନ୍ତୁ; ଜରୁରୀ ସହାୟତା ପାଇଁ ୧୧୨ ଡାଏଲ କରନ୍ତୁ।'
     ],
     smsText: (city, temp, desc, wind, hum) => `🚨 [IMD/NDMA ଲାଇଭ୍ ତଥ୍ୟ] ${city}: ତାପମାତ୍ରା ${temp}°C, ${desc}, ପବନ: ${wind} km/h, ଆର୍ଦ୍ରତା: ${hum}%। ଜରୁରୀ ସହାୟତା: ୧୧୨।`,
     whatsappHeader: '🌤️ *ଭାରତୀୟ ପାଣିପାଗ ବିଭାଗ — ଲାଇଭ୍ ରିଅଲ-ଟାଇମ୍ ବୁଲେଟିନ୍*',
@@ -1222,7 +1222,7 @@ const VERNACULAR_LIVE_TERMS = {
   },
   en: {
     station: 'OpenWeather Sensor Network Live Feed',
-    title: (city, temp, cond) => `${city} Real-Time Meteorological Bulletin — ${temp}°C (${cond})`,
+    title: (city, temp, cond) => `${city} Weather Check: It's currently ${temp}°C with ${(cond || 'overcast').toLowerCase()} skies.`,
     threat: (city, temp, desc, wind, hum, rain) => `According to live OpenWeather sensor observations, ${city} currently records an ambient temperature of ${temp}°C with conditions reported as '${desc}'. Wind velocity is clocked at ${wind} km/h and relative atmospheric humidity is ${hum}%.${rain > 0 ? ` Precipitation of ${rain} mm observed in past hour.` : ' Regional atmospheric parameters remain within stable thresholds.' }`,
     steps: [
       'Monitor regular meteorological bulletins and local safety advisories.',

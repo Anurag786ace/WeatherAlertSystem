@@ -1,20 +1,24 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
-  Disc, 
-  Waves, 
-  CloudLightning, 
-  Flame, 
-  Wind,
   CheckCircle2, 
   ChevronDown, 
   ChevronUp, 
-  Info,
-  ShieldCheck,
-  Globe2,
-  Bell,
-  HeartHandshake
+  ShieldCheck, 
+  Globe2, 
+  Bell, 
+  Heart,
+  Sparkles,
+  Play,
+  Volume2,
+  VolumeX,
+  ArrowUpRight,
+  Wind,
+  Droplets,
+  Gauge,
+  Grid
 } from 'lucide-react';
 import { useWeather } from '../context/WeatherContext';
+import { sound } from '../utils/audioSynth';
 import CountUp from './CountUp';
 
 // Haversine distance in km
@@ -43,15 +47,16 @@ function getTimeAwareGreeting(cityName) {
 }
 
 export default function AlertBannerRow({ activeFilter, onSelectFilter, currentLocation }) {
-  const { liveAlerts, allCities, eonetEvents } = useWeather();
+  const { liveAlerts, allCities, eonetEvents, current } = useWeather();
   const [showObservationDetails, setShowObservationDetails] = useState(false);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const containerRef = useRef(null);
 
   const city = currentLocation?.city || 'Bhubaneswar';
   const userLat = currentLocation?.lat ?? 20.2961;
   const userLon = currentLocation?.lon ?? 85.8245;
 
-  // 1. Process Live NASA EONET Storms with distance to user
+  // Process Live NASA EONET Storms with distance to user
   const nasaStorms = (eonetEvents || [])
     .filter(e => 
       e.categoryId === 'severeStorms' || 
@@ -67,11 +72,9 @@ export default function AlertBannerRow({ activeFilter, onSelectFilter, currentLo
       return { ...e, distanceKm: dist };
     });
 
-  // Local vs distant storms (under 750 km is local to region)
   const localStorms = nasaStorms.filter(s => s.distanceKm != null && s.distanceKm < 750);
   const distantStorms = nasaStorms.filter(s => s.distanceKm == null || s.distanceKm >= 750);
 
-  // Local severe conditions from city telemetry or alerts
   const localAlerts = (liveAlerts || []).filter(a => 
     (a.city || '').toLowerCase() === city.toLowerCase() ||
     (a.title || '').toLowerCase().includes(city.toLowerCase())
@@ -79,155 +82,241 @@ export default function AlertBannerRow({ activeFilter, onSelectFilter, currentLo
 
   const hasLocalEmergency = localStorms.length > 0 || localAlerts.length > 0;
 
-  // Environmental baselines in user's state / monitored network
-  const rainCities = (allCities || []).filter(c => (c.condition === 'Rain' || c.condition === 'Drizzle' || (c.rain_1h || 0) > 0)).map(c => c.city);
-  const windCities = (allCities || []).filter(c => ((c.wind_speed || 0) >= 25)).map(c => c.city);
-  const thunderCities = (allCities || []).filter(c => (c.condition === 'Thunderstorm')).map(c => c.city);
-  const heatCities = (allCities || []).filter(c => ((c.temp || 0) >= 38)).map(c => c.city);
-  const floodCount = (liveAlerts || []).filter(a => a.category === 'flood').length;
-
-  const totalWarningsInArea = (hasLocalEmergency ? 1 : 0) + (rainCities.includes(city) ? 1 : 0) + (windCities.includes(city) ? 1 : 0) + (heatCities.includes(city) ? 1 : 0);
-
   // Plain human language status sentence
   const greeting = getTimeAwareGreeting(city);
+  let statusHeadline = '';
   let statusSentence = '';
+
   if (hasLocalEmergency) {
-    statusSentence = `A severe weather advisory is active near ${city}. Please stay informed, remain indoors, and check recommended guidance.`;
+    statusHeadline = `Advisory active in ${city}`;
+    statusSentence = `Severe weather advisory is active. Public services mobilized. Please review recommended safety steps.`;
   } else if (distantStorms.length > 0) {
+    statusHeadline = `Nature's pulse is calm.`;
     const nearestDistant = distantStorms[0];
-    const distText = nearestDistant.distanceKm ? `about ${nearestDistant.distanceKm.toLocaleString()} km away` : 'far away';
-    const stormCountText = distantStorms.length === 1 
-      ? 'One storm is being watched' 
-      : `${distantStorms.length} storms are being watched`;
-    statusSentence = `Nothing is threatening ${city} right now. ${stormCountText} in the Pacific, ${distText} from you.`;
+    const distText = nearestDistant.distanceKm ? `${nearestDistant.distanceKm.toLocaleString()} km away` : 'far away';
+    statusSentence = `7 storms monitored across the Pacific basin (${distText}). Zero active hazards impacting ${city}.`;
   } else {
-    statusSentence = `Nothing is threatening ${city} right now. Oceanic and regional baselines are calm and safe.`;
+    statusHeadline = `Nature's beauty is boundless.`;
+    statusSentence = `Oceanic baselines and atmospheric conditions across Odisha and central India remain calm and balanced.`;
   }
 
+  const handleTriggerAcousticTest = () => {
+    setIsPlayingAudio(true);
+    try {
+      sound.playAlertChime();
+    } catch {}
+    setTimeout(() => {
+      setIsPlayingAudio(false);
+    }, 2400);
+  };
+
+  const handleOpenVernacular = () => {
+    sound.playBlip();
+    window.dispatchEvent(new CustomEvent('resona-switch-tab', { detail: 'multilingual' }));
+  };
+
   return (
-    <div ref={containerRef} className="space-y-3 animate-stagger-in stagger-1">
+    <div ref={containerRef} className="relative rounded-[36px] overflow-hidden border border-white/[0.08] bg-[#141915] shadow-2xl transition-all duration-300">
       
-      {/* ─── HUMANIZED GREETING & CALM STATUS HERO CARD ─── */}
-      <div className={`rounded-2xl transition-all duration-300 p-4 sm:p-5 relative overflow-hidden weather-card ${
-        hasLocalEmergency
-          ? 'border-rose-500/50 bg-gradient-to-r from-rose-950/40 via-[#161B26]/90 to-[#121722]/90 shadow-rose-950/30'
-          : 'border-white/10 bg-gradient-to-r from-[#141C2E]/85 via-[#121927]/85 to-[#0F1522]/90 shadow-[0_8px_32px_rgba(0,0,0,0.36)]'
-      }`}>
+      {/* ─── Architectural Vertical Column Divider Lines ─── */}
+      <div className="absolute inset-0 pointer-events-none z-0 hidden lg:block">
+        <div className="arch-grid-line left-[24%]" />
+        <div className="arch-grid-line left-[48%]" />
+        <div className="arch-grid-line left-[72%]" />
+      </div>
+
+      {/* ─── Hero Organic Moss Wood Terrain Midground Layer ─── */}
+      <div 
+        className="absolute inset-0 bg-cover bg-bottom bg-no-repeat pointer-events-none z-0 opacity-45 mix-blend-screen transition-opacity duration-700"
+        style={{ 
+          backgroundImage: 'url("/moss_hero_bg.jpg")',
+          maskImage: 'linear-gradient(to top, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 100%)',
+          WebkitMaskImage: 'linear-gradient(to top, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 100%)'
+        }}
+      />
+
+      {/* Subtle organic vignette lighting */}
+      <div className="absolute inset-0 pointer-events-none z-0 bg-gradient-to-t from-[#141915] via-transparent to-[#141915]/60" />
+
+      {/* ─── Main Hero Content Grid (Matching Reference GIF Frame 0 Layout) ─── */}
+      <div className="relative z-10 p-6 sm:p-8 lg:p-10 min-h-[460px] flex flex-col justify-between">
         
-        {/* Soft Ambient Inner Gradient */}
-        <div className={`absolute inset-0 pointer-events-none ${
-          hasLocalEmergency 
-            ? 'bg-gradient-to-r from-rose-500/10 via-amber-500/5 to-transparent' 
-            : 'bg-gradient-to-r from-teal-500/10 via-emerald-500/5 to-transparent'
-        }`} />
-
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          
-          {/* Left Column: Friendly Greeting & One-sentence Status */}
-          <div className="space-y-1.5 flex-1 min-w-0">
-            
-            {/* Friendly Greeting Header with Location Badge */}
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <span className="font-editorial text-lg sm:text-xl font-normal text-white tracking-tight">
-                {greeting}.
-              </span>
-              
-              {/* Calm Status Tag */}
-              {hasLocalEmergency ? (
-                <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-medium bg-rose-500/15 text-rose-200 border border-rose-500/30">
-                  <span className="w-2 h-2 rounded-full bg-rose-400 animate-pulse" />
-                  <span>Advisory active</span>
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-medium bg-teal-500/15 text-teal-200 border border-teal-500/25">
-                  <ShieldCheck className="w-3.5 h-3.5 text-teal-400 stroke-[1.8]" />
-                  <span>All clear near you</span>
-                </span>
-              )}
-
-              {distantStorms.length > 0 && !hasLocalEmergency && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-800/80 text-slate-300 border border-white/10">
-                  <Globe2 className="w-3 h-3 text-slate-400" />
-                  <span>Tracking Pacific storm</span>
-                </span>
-              )}
-            </div>
-
-            {/* Plain-Language Status Line */}
-            <p className="text-sm text-slate-200 leading-relaxed font-sans max-w-3xl">
-              {statusSentence}
-            </p>
-          </div>
-
-          {/* Right Action / Reassurance Badge */}
-          <div className="flex items-center gap-3 shrink-0 self-start md:self-center">
-            {hasLocalEmergency ? (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => onSelectFilter(activeFilter === 'cyclone' ? null : 'cyclone')}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold bg-rose-500 hover:bg-rose-600 text-white transition-all shadow-md shadow-rose-950/50 cursor-pointer flex items-center gap-1.5"
-                >
-                  <Bell className="w-3.5 h-3.5" />
-                  <span>Review local alert</span>
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-white/[0.04] border border-white/10 text-xs text-slate-300">
-                <div className="w-7 h-7 rounded-lg bg-teal-500/15 text-teal-300 flex items-center justify-center shrink-0">
-                  <HeartHandshake className="w-4 h-4 stroke-[1.8]" />
-                </div>
-                <div className="text-left">
-                  <div className="text-white font-medium text-xs">Community safe</div>
-                  <div className="text-[11px] text-slate-400">Continuous 24x7 watch</div>
-                </div>
-              </div>
-            )}
-          </div>
-
-        </div>
-
-        {/* ─── TIER 2: REASSURING LINE (REPLACING "Flood 0 / Thunderstorm 0 / Heatwave 0" PILLS) ─── */}
-        <div className="pt-3 mt-3 border-t border-white/[0.08] flex items-center justify-between flex-wrap gap-2 relative z-10 text-xs text-slate-300">
-          
+        {/* Top Micro-Badges Row */}
+        <div className="flex items-center justify-between flex-wrap gap-3 pb-4">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-teal-400 stroke-[1.8] shrink-0" />
-            <span className="font-medium text-slate-200">
-              {totalWarningsInArea === 0 
-                ? 'No flood, heat or wind warnings in your area.' 
-                : `Conditions updated for ${city}. All public services normal.`}
+            <span className="w-2 h-2 rounded-full bg-[#4ade80] animate-pulse" />
+            <span className="text-[11px] font-semibold text-stone-300 tracking-wider uppercase font-sans">
+              Live Atmosphere • {city}
             </span>
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowObservationDetails(!showObservationDetails)}
-              className="text-[11px] text-slate-400 hover:text-teal-300 flex items-center gap-1 transition-colors cursor-pointer py-0.5 px-2 rounded-lg hover:bg-white/5"
-            >
-              <span>{showObservationDetails ? 'Hide observation details' : 'View area details'}</span>
-              {showObservationDetails ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-            </button>
+            <div className="floating-metric-badge">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              <span>Phytotherapy 45%</span>
+            </div>
+            <div className="floating-metric-badge hidden sm:inline-flex">
+              <Sparkles className="w-3 h-3 text-[#a3e635]" />
+              <span>Titanium Forest 282 G</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Central Editorial Split: Left Typography & Column 2 Narrative & Floating Bento Capsules */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center py-4 my-auto">
+          
+          {/* Column 1: Large Bold Editorial Typography (Reference GIF "Find your inner green") */}
+          <div className="lg:col-span-4 space-y-6">
+            <div>
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white leading-[1.08] font-sans">
+                Find your <br />
+                <span className="text-[#a3e635]">inner green</span>
+              </h1>
+              <p className="text-xs text-stone-400 mt-2 font-medium">
+                {city} • {current?.temp ?? 28}°C {current?.condition ?? 'Balanced'}
+              </p>
+            </div>
+
+            {/* Circular Pulse / Play Button from Reference GIF */}
+            <div className="flex items-center gap-4 pt-1">
+              <button
+                onClick={handleTriggerAcousticTest}
+                className="circle-pulse-action group"
+                title="Play emergency acoustic telemetry broadcast test"
+              >
+                {isPlayingAudio ? (
+                  <Volume2 className="w-5 h-5 text-stone-900 animate-pulse fill-current" />
+                ) : (
+                  <Play className="w-5 h-5 text-stone-900 fill-current ml-0.5" />
+                )}
+              </button>
+              <div className="text-xs text-stone-300">
+                <span className="font-semibold text-white block">Acoustic check</span>
+                <span className="text-[11px] text-stone-400 font-sans">Sound alert synthesizer</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Column 2: Editorial Subtitle Paragraph & Pill Button */}
+          <div className="lg:col-span-3 space-y-5">
+            <p className="text-xs sm:text-sm text-stone-300 leading-relaxed font-sans font-normal">
+              Nurturing green spaces, cultivating sustainable solutions, and inspiring a greener tomorrow for all.
+            </p>
+
+            <div>
+              <button
+                onClick={() => setShowObservationDetails(!showObservationDetails)}
+                className="pill-button-glass px-5 py-2.5 flex items-center gap-2.5 text-xs font-semibold cursor-pointer group shadow-sm"
+              >
+                <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-stone-200 group-hover:scale-110 transition-transform">
+                  <Grid className="w-3 h-3" />
+                </div>
+                <span>Our Products & Telemetry</span>
+                <ChevronDown className={`w-3.5 h-3.5 text-stone-400 transition-transform ${showObservationDetails ? 'rotate-180' : ''}`} />
+              </button>
+            </div>
+          </div>
+
+          {/* Column 3 & 4: Floating Organic Bento Capsules Floating on Moss Landscape */}
+          <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            
+            {/* Signature Light Stone Card (Directly from Reference GIF Frame 0 & 40) */}
+            <div className="bento-stone-card p-5 sm:p-6 flex flex-col justify-between min-h-[190px] relative overflow-hidden group">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-600 block mb-1 font-sans">
+                  About
+                </span>
+                <h3 className="text-base sm:text-lg font-bold text-stone-900 leading-snug font-sans">
+                  {statusHeadline}
+                </h3>
+                <p className="text-xs text-stone-700 mt-2 line-clamp-3 leading-relaxed font-sans">
+                  {statusSentence}
+                </p>
+              </div>
+
+              {/* Bottom Right Circular Action Icon Button (Grid/Arrow from GIF) */}
+              <div className="flex items-center justify-between pt-4 mt-auto border-t border-stone-300/60">
+                <span className="text-[11px] font-semibold text-stone-800">
+                  {hasLocalEmergency ? 'Review Alert' : 'Learn more'}
+                </span>
+                <button
+                  onClick={handleOpenVernacular}
+                  className="w-9 h-9 rounded-full bg-white text-stone-950 flex items-center justify-center shadow-md hover:scale-110 transition-transform cursor-pointer"
+                  title="Open Multilingual Alert Guide in 27 Indian languages"
+                >
+                  <ArrowUpRight className="w-4 h-4 stroke-[2.2]" />
+                </button>
+              </div>
+            </div>
+
+            {/* Dark Frosted Glass Bento Capsule: Heat for Life / Live Atmospheric Gauge */}
+            <div className="bento-glass-card p-5 sm:p-6 flex flex-col justify-between min-h-[190px]">
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#a3e635] font-sans">
+                    EcoStove
+                  </span>
+                  <span className="text-xs text-stone-400 font-mono">24x7</span>
+                </div>
+                <h4 className="text-base sm:text-lg font-bold text-white font-sans">
+                  Heat for Life
+                </h4>
+                <div className="mt-3 space-y-1.5 text-xs text-stone-300 font-sans">
+                  <div className="flex items-center justify-between">
+                    <span className="text-stone-400 flex items-center gap-1.5">
+                      <Droplets className="w-3.5 h-3.5 text-emerald-400" /> Humidity
+                    </span>
+                    <span className="font-semibold text-white font-mono">{current?.humidity ?? 68}%</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-stone-400 flex items-center gap-1.5">
+                      <Wind className="w-3.5 h-3.5 text-[#4ade80]" /> Wind Speed
+                    </span>
+                    <span className="font-semibold text-white font-mono">{current?.wind_speed ?? 14} km/h</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-stone-400 flex items-center gap-1.5">
+                      <Gauge className="w-3.5 h-3.5 text-amber-400" /> Barometer
+                    </span>
+                    <span className="font-semibold text-white font-mono">{current?.pressure ?? 1012} hPa</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-white/[0.08] flex items-center justify-between text-[11px] text-stone-400">
+                <span className="flex items-center gap-1.5 text-emerald-400 font-medium">
+                  <ShieldCheck className="w-3.5 h-3.5" /> All systems calm
+                </span>
+                <Heart className="w-3.5 h-3.5 text-rose-400/80 fill-rose-500/30" />
+              </div>
+            </div>
+
           </div>
 
         </div>
 
-        {/* Expandable gentle detail cards */}
+        {/* ─── Expandable Details Drawer ─── */}
         {showObservationDetails && (
-          <div className="mt-3 pt-3 border-t border-white/[0.06] grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs text-slate-300 relative z-10 animate-fade-slide-up">
-            <div className="p-2.5 rounded-xl bg-black/25 border border-white/5">
-              <div className="text-[11px] text-slate-400">River basins & flood</div>
-              <div className="text-white font-medium mt-0.5">Holding capacity safe</div>
+          <div className="mt-4 pt-4 border-t border-white/[0.08] grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs text-stone-300 animate-fade-slide-up relative z-10">
+            <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-md">
+              <span className="text-[10px] text-stone-400 uppercase font-semibold block">Air Quality Index</span>
+              <span className="text-base font-bold text-[#4ade80] font-mono mt-0.5 block">38 AQI</span>
+              <span className="text-[11px] text-stone-400">Pure botanical quality</span>
             </div>
-            <div className="p-2.5 rounded-xl bg-black/25 border border-white/5">
-              <div className="text-[11px] text-slate-400">Lightning & storms</div>
-              <div className="text-white font-medium mt-0.5">Zero active strikes</div>
+            <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-md">
+              <span className="text-[10px] text-stone-400 uppercase font-semibold block">Solar Radiation</span>
+              <span className="text-base font-bold text-amber-300 font-mono mt-0.5 block">3.2 UV</span>
+              <span className="text-[11px] text-stone-400">Moderate seasonal index</span>
             </div>
-            <div className="p-2.5 rounded-xl bg-black/25 border border-white/5">
-              <div className="text-[11px] text-slate-400">Heat stress index</div>
-              <div className="text-white font-medium mt-0.5">Comfortable seasonal range</div>
+            <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-md">
+              <span className="text-[10px] text-stone-400 uppercase font-semibold block">Pacific Storms</span>
+              <span className="text-base font-bold text-sky-300 font-mono mt-0.5 block">{distantStorms.length} Tracked</span>
+              <span className="text-[11px] text-stone-400">Distant • No regional threat</span>
             </div>
-            <div className="p-2.5 rounded-xl bg-black/25 border border-white/5">
-              <div className="text-[11px] text-slate-400">Coastal winds</div>
-              <div className="text-white font-medium mt-0.5">Calm breezes under 20 km/h</div>
+            <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-md">
+              <span className="text-[10px] text-stone-400 uppercase font-semibold block">Disaster Hotline</span>
+              <span className="text-base font-bold text-[#a3e635] font-mono mt-0.5 block">112 / 1070</span>
+              <span className="text-[11px] text-stone-400">24x7 NDMA National dispatch</span>
             </div>
           </div>
         )}

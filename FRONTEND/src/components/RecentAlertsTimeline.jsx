@@ -54,15 +54,15 @@ export default function RecentAlertsTimeline({ onSelectAlert }) {
   ];
 
   return (
-    <div className="weather-card p-4 sm:p-5 flex flex-col justify-between shadow-xl relative overflow-hidden">
+    <div className="bento-glass-card p-5 flex flex-col justify-between relative overflow-hidden group">
       
       {/* Header */}
-      <div className="flex items-center justify-between pb-2.5 border-b border-white/10 mb-2.5">
-        <h3 className="text-sm font-semibold text-white tracking-normal font-sans">
-          Recent weather updates
+      <div className="flex items-center justify-between pb-3 border-b border-white/[0.08] mb-3">
+        <h3 className="text-sm font-bold text-white tracking-normal font-sans">
+          Recent Meteorological Bulletins
         </h3>
-        <span className="text-[11px] text-teal-300 flex items-center gap-1.5 bg-teal-500/10 px-2.5 py-0.5 rounded-full border border-teal-500/20">
-          <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse"></span>
+        <span className="text-[11px] text-[#4ade80] flex items-center gap-1.5 bg-[#4ade80]/15 px-2.5 py-0.5 rounded-full border border-[#4ade80]/30 font-semibold font-sans">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#4ade80] animate-pulse"></span>
           <span>Live feed</span>
         </span>
       </div>

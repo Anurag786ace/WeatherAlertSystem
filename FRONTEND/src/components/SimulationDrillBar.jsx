@@ -239,12 +239,12 @@ export default function SimulationDrillBar({
 
   if (!isSimulating) {
     return (
-      <div className="bg-gradient-to-r from-amber-500/10 via-rose-500/10 to-cyan-500/10 border-b border-amber-500/20 px-4 py-2 flex items-center justify-between text-xs">
-        <div className="flex items-center gap-2 text-slate-300">
-          <Flame className="w-4 h-4 text-amber-400 animate-pulse" />
-          <span className="font-semibold text-white">Interactive Emergency Drill Sandbox:</span>
-          <span className="text-slate-400 hidden sm:inline">
-            Test platform response to Category-4 cyclones and flash floods with historical benchmarks.
+      <div className="bg-[#17201a]/85 border-b border-white/[0.07] px-4 py-2 flex items-center justify-between text-xs backdrop-blur-xl">
+        <div className="flex items-center gap-2.5 text-stone-300">
+          <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+          <span className="font-semibold text-white font-sans">Emergency Simulation Drill Sandbox:</span>
+          <span className="text-stone-400 hidden sm:inline font-sans">
+            Test platform response to Category-4 cyclones and flash floods with historical IMD benchmarks.
           </span>
         </div>
         <button
@@ -252,9 +252,9 @@ export default function SimulationDrillBar({
             try { sound.playAlertChime(); } catch {}
             onStartSimulation(DRILL_SCENARIOS[0].id);
           }}
-          className="px-3 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-semibold rounded-lg border border-amber-500/30 flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
+          className="px-3.5 py-1 rounded-full bg-white/[0.08] hover:bg-white/[0.14] text-stone-200 hover:text-white font-medium border border-white/15 flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
         >
-          <Play className="w-3 h-3 text-amber-400" />
+          <Play className="w-3 h-3 text-emerald-400" />
           <span>Launch Disaster Drill</span>
         </button>
       </div>
@@ -262,7 +262,7 @@ export default function SimulationDrillBar({
   }
 
   return (
-    <div className="bg-[#0B1226]/95 border-b border-rose-500/40 backdrop-blur-xl shadow-2xl p-3 sm:p-4 text-xs animate-in slide-in-from-top-4 z-40 relative">
+    <div className="bg-[#18211a]/95 border-b border-rose-500/30 backdrop-blur-2xl shadow-2xl p-3 sm:p-4 text-xs animate-in slide-in-from-top-4 z-40 relative">
       
       {/* Top row: Status tag, scenario picker, and exit */}
       <div className="flex items-center justify-between gap-3 flex-wrap pb-3 border-b border-white/[0.08]">

@@ -5,20 +5,22 @@ import React, { useEffect, useState, useRef } from 'react';
  * Animates numbers on mount or value change using requestAnimationFrame
  */
 export default function CountUp({ 
-  value = 0, 
+  value,
+  end, 
   duration = 1000, 
   decimals = 0, 
   prefix = '', 
   suffix = '', 
   className = '' 
 }) {
+  const targetNumber = Number(value !== undefined ? value : (end !== undefined ? end : 0)) || 0;
   const [displayValue, setDisplayValue] = useState(0);
   const startTimestampRef = useRef(null);
   const startValueRef = useRef(0);
-  const targetValueRef = useRef(Number(value) || 0);
+  const targetValueRef = useRef(targetNumber);
 
   useEffect(() => {
-    const target = Number(value) || 0;
+    const target = Number(value !== undefined ? value : (end !== undefined ? end : 0)) || 0;
     startValueRef.current = displayValue;
     targetValueRef.current = target;
     startTimestampRef.current = null;

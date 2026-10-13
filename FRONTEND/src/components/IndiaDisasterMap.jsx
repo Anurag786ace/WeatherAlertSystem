@@ -622,21 +622,21 @@ export default function IndiaDisasterMap({ onSelectAlertZone, onSelectLocation, 
   };
 
   return (
-    <div className="weather-card rounded-2xl border border-white/[0.08] overflow-hidden flex flex-col relative h-[560px] shadow-2xl">
+    <div className="bento-glass-card rounded-[32px] overflow-hidden flex flex-col relative h-[560px] shadow-2xl">
       
       {/* Top Map Header Controls */}
-      <div className="px-4 py-2.5 bg-[#0A0F1F]/85 backdrop-blur-xl border-b border-white/[0.06] flex flex-wrap items-center justify-between gap-2 z-10">
+      <div className="px-4 py-3 bg-[#18211a]/85 backdrop-blur-xl border-b border-white/[0.06] flex flex-wrap items-center justify-between gap-2 z-10">
         <div className="flex items-center gap-2.5">
-          <h3 className="text-xs font-medium text-slate-200 tracking-normal flex items-center gap-2">
-            Live map
+          <h3 className="text-xs font-semibold text-white tracking-normal flex items-center gap-2 font-sans">
+            Live interactive map
           </h3>
-          <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-sans font-medium bg-teal-500/10 border border-teal-500/20 text-teal-300">
-            <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse"></span>
+          <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-sans font-medium bg-[#4ade80]/10 border border-[#4ade80]/20 text-[#4ade80]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#4ade80] animate-pulse"></span>
             <span>Live observation</span>
           </span>
           {isLoadingLiveWeather && (
-            <span className="text-[11px] text-slate-400 font-sans flex items-center gap-1.5 hidden sm:flex">
-              <RefreshCw className="w-2.5 h-2.5 animate-spin text-sky-400" />
+            <span className="text-[11px] text-stone-400 font-sans flex items-center gap-1.5 hidden sm:flex">
+              <RefreshCw className="w-2.5 h-2.5 animate-spin text-[#4ade80]" />
               Syncing
             </span>
           )}

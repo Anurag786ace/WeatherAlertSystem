@@ -41,14 +41,14 @@ export default function RiskLevelCard({ riskScore: propScore, riskLevel: propLev
     : 'text-teal-200 bg-teal-500/10 border-teal-500/20';
 
   return (
-    <div className="weather-card p-4 sm:p-5 flex flex-col justify-between shadow-xl relative overflow-hidden">
+    <div className="bento-glass-card p-5 flex flex-col justify-between relative overflow-hidden group">
       
       {/* Header */}
-      <div className="pb-2.5 border-b border-white/10 mb-2 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-white tracking-normal font-sans">
-          Area safety assessment
+      <div className="pb-3 border-b border-white/[0.08] mb-2 flex items-center justify-between">
+        <h3 className="text-sm font-bold text-white tracking-normal font-sans">
+          Threat & Safety Assessment
         </h3>
-        <span className={`text-[11px] font-medium px-2.5 py-0.5 rounded-full border ${badgeColor}`}>
+        <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${badgeColor}`}>
           Status: {level}
         </span>
       </div>

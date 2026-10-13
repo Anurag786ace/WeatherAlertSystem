@@ -317,22 +317,22 @@ export default function ActiveAlertsList({
   };
 
   return (
-    <div className="weather-card p-4 sm:p-5 flex flex-col h-[560px] shadow-[0_8px_32px_rgba(0,0,0,0.36)] relative overflow-hidden animate-stagger-in stagger-2">
+    <div className="bento-glass-card p-5 flex flex-col h-[560px] shadow-2xl relative overflow-hidden animate-stagger-in stagger-2">
       
       {/* Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-3 relative z-10">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between pb-3.5 border-b border-white/[0.08] mb-3 relative z-10">
+        <div className="flex items-center gap-2.5">
           <h3 className="text-sm font-semibold text-white tracking-normal font-sans">
             Weather & storm alerts
           </h3>
-          <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-white/[0.06] text-slate-300 font-medium border border-white/10">
+          <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-white/[0.06] text-stone-300 font-medium border border-white/10 font-sans">
             {filteredNear.length} near you
           </span>
         </div>
         
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 text-xs text-teal-300 font-medium bg-teal-500/10 px-2.5 py-1 rounded-full border border-teal-500/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
+          <span className="inline-flex items-center gap-1.5 text-xs text-[#4ade80] font-medium bg-[#4ade80]/10 px-2.5 py-1 rounded-full border border-[#4ade80]/20">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#4ade80] animate-pulse" />
             <span>Live check</span>
           </span>
         </div>

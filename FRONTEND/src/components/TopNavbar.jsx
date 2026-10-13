@@ -19,7 +19,8 @@ import {
   BellRing,
   Navigation,
   Compass,
-  Loader2
+  Loader2,
+  Menu
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useWeather } from '../context/WeatherContext';
@@ -57,7 +58,21 @@ export function getVernacularBadgeText(loc) {
   return 'Hindi (हिन्दी)';
 }
 
+export const TOP_NAV_TABS = [
+  { id: 'dashboard', label: 'Dashboard' },
+  { id: 'multilingual', label: 'Languages', badge: '27 langs' },
+  { id: 'map', label: 'Live map' },
+  { id: 'alerts', label: 'Alerts', hasAlertBadge: true },
+  { id: 'forecast', label: 'Forecast' },
+  { id: 'reports', label: 'Reports' },
+  { id: 'resources', label: 'Shelters' },
+  { id: 'auth', label: 'Community' },
+  { id: 'settings', label: 'Settings' },
+];
+
 export default function TopNavbar({ 
+  activeTab,
+  onSelectTab,
   currentLocation, 
   onSelectLocation, 
   onOpenSafetyModal,
@@ -86,11 +101,13 @@ export default function TopNavbar({
   // Other menus
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const searchRef = useRef(null);
   const locRef = useRef(null);
   const notifRef = useRef(null);
   const userRef = useRef(null);
+  const mobileNavRef = useRef(null);
 
   // Close menus on outside click
   useEffect(() => {
@@ -99,6 +116,7 @@ export default function TopNavbar({
       if (locRef.current && !locRef.current.contains(e.target)) setLocationMenuOpen(false);
       if (notifRef.current && !notifRef.current.contains(e.target)) setNotificationsOpen(false);
       if (userRef.current && !userRef.current.contains(e.target)) setUserMenuOpen(false);
+      if (mobileNavRef.current && !mobileNavRef.current.contains(e.target)) setMobileNavOpen(false);
     };
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
@@ -303,29 +321,66 @@ export default function TopNavbar({
   const REGION_TABS = ['All', 'Popular', 'East', 'North', 'South', 'West', 'Central', 'Northeast'];
 
   return (
-    <header className="sticky top-0 z-50 h-16 bg-slate-950/80 backdrop-blur-2xl border-b border-white/10 px-4 sm:px-6 flex items-center justify-between gap-4 transition-all duration-300">
+    <header className="sticky top-0 z-50 h-16 bg-[#151a17]/90 backdrop-blur-2xl border-b border-white/[0.07] px-4 sm:px-6 flex items-center justify-between gap-4 transition-all duration-300">
       
       {/* Left: Brand Identity */}
       <div className="flex items-center gap-3 shrink-0">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500/20 to-indigo-600/20 border border-sky-400/30 flex items-center justify-center shadow-[0_0_15px_rgba(56,189,248,0.15)] relative overflow-hidden group">
-          <div className="absolute inset-0 bg-gradient-to-tr from-sky-400/0 via-white/10 to-sky-400/0 translate-x-[-100%] group-hover:animate-[shimmer_1.5s_infinite]"></div>
-          <CloudLightning className="w-5 h-5 text-sky-400 relative z-10 drop-shadow-[0_0_5px_rgba(56,189,248,0.5)]" />
+        <div className="w-9 h-9 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center text-[#4ade80] shadow-sm relative overflow-hidden group">
+          <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+            <path d="M12 2C7.5 2 3.8 5.7 3.8 10.2c0 4.8 6.2 10.8 7.6 12.1.3.3.9.3 1.2 0 1.4-1.3 7.6-7.3 7.6-12.1C20.2 5.7 16.5 2 12 2zm0 13c-2.8 0-5-2.2-5-5s2.2-5 5-5 5 2.2 5 5-2.2 5-5 5z"/>
+          </svg>
         </div>
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-lg font-bold tracking-tight text-white">
-              Resona<span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-indigo-400">Alert</span>
+            <span className="text-base font-bold tracking-tight text-white font-sans">
+              Resona
             </span>
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.6)]" title="IMD & OpenWeather Telemetry Online" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[#4ade80] animate-pulse" title="Telemetry Online" />
           </div>
-          <div className="text-[11px] text-slate-400 font-sans font-medium">All India & Global Telemetry</div>
+          <div className="text-[10px] text-stone-400 font-sans tracking-wide">Climate Intelligence</div>
         </div>
       </div>
 
-      {/* Center: Search Location Bar (Supports EVERY location) */}
-      <div className="flex-1 max-w-xl relative hidden md:block" ref={searchRef}>
+      {/* Center: Top Navigation Links (All 9 Tabs from former Sidebar) */}
+      <nav className="hidden md:flex items-center gap-0.5 lg:gap-1 bg-white/[0.03] border border-white/[0.07] p-1 rounded-full backdrop-blur-md overflow-x-auto no-scrollbar shrink-0 max-w-full">
+        {TOP_NAV_TABS.map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => onSelectTab && onSelectTab(tab.id)}
+              className={`px-3 py-1.5 rounded-full text-xs transition-all duration-200 cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
+                isActive 
+                  ? 'bg-white text-stone-900 font-semibold shadow-sm' 
+                  : 'text-stone-300 hover:text-white hover:bg-white/[0.06] font-medium'
+              }`}
+            >
+              <span>{tab.label}</span>
+
+              {tab.badge && (
+                <span className={`hidden 2xl:inline text-[9px] px-1.5 py-0.2 rounded-full font-medium transition-colors ${
+                  isActive ? 'bg-stone-200 text-stone-900' : 'bg-white/10 text-stone-300'
+                }`}>
+                  {tab.badge}
+                </span>
+              )}
+
+              {tab.hasAlertBadge && (
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold flex items-center justify-center transition-colors ${
+                  isActive ? 'bg-rose-500 text-white' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                }`}>
+                  <AnimatedCounter value={liveAlerts?.length > 0 ? liveAlerts.length : 3} />
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* Center / Right Search Location Bar (Fixed Comfortable Width) */}
+      <div className="relative hidden xl:block w-48 2xl:w-60 shrink-0" ref={searchRef}>
         <div className="relative group">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors group-hover:text-teal-400 stroke-[1.8]" />
+          <Search className="w-3.5 h-3.5 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors group-hover:text-emerald-400 stroke-[1.8]" />
           <input
             type="text"
             value={searchQuery}
@@ -345,8 +400,8 @@ export default function TopNavbar({
                 e.target.blur();
               }
             }}
-            placeholder="Search any city, district, or town in India or worldwide..."
-            className="w-full pl-10 pr-24 py-2 bg-slate-900/90 border border-white/10 hover:border-white/20 focus:border-teal-500/60 focus:bg-slate-900 rounded-xl text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none transition-all duration-300 shadow-inner"
+            placeholder="Search city, town..."
+            className="w-full pl-9 pr-14 py-1.5 bg-white/[0.04] border border-white/[0.08] hover:border-white/20 focus:border-emerald-500/50 focus:bg-stone-900/90 rounded-full text-xs text-stone-200 placeholder:text-stone-500 focus:outline-none transition-all duration-200 shadow-inner"
           />
           <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
             {isSearchingOnline && (
@@ -371,11 +426,11 @@ export default function TopNavbar({
           </div>
         </div>
 
-        {/* Search Dropdown Results with Solid Opaque Background */}
+        {/* Search Dropdown Results with Proper Width and Solid Background */}
         {searchOpen && (
           <div 
             style={{ backgroundColor: '#0B1120' }}
-            className="absolute top-full left-0 right-0 mt-2 border border-slate-700/80 rounded-2xl shadow-[0_25px_70px_rgba(0,0,0,0.95)] overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150 max-h-[460px] flex flex-col"
+            className="absolute top-full right-0 w-80 sm:w-96 mt-2 border border-slate-700/80 rounded-2xl shadow-[0_25px_70px_rgba(0,0,0,0.95)] overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150 max-h-[460px] flex flex-col"
           >
             {/* Dropdown Header with GPS button & live count */}
             <div 
@@ -518,7 +573,7 @@ export default function TopNavbar({
       </div>
 
       {/* Right Section: Location Pill, Atmosphere, Notifications, Profile */}
-      <div className="flex items-center gap-2.5 shrink-0">
+      <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 ml-auto">
         
         {/* Active Location Pill & Comprehensive Location Picker */}
         <div className="relative" ref={locRef}>
@@ -880,15 +935,65 @@ export default function TopNavbar({
         ) : (
           <button
             onClick={() => onNavigateToAuth ? onNavigateToAuth() : onOpenAuthModal('login')}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-sm transition-all shadow-[0_0_15px_rgba(56,189,248,0.3)] hover:shadow-[0_0_20px_rgba(56,189,248,0.5)] cursor-pointer"
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white hover:bg-stone-100 text-stone-950 font-semibold text-xs transition-all shadow-md hover:scale-105 cursor-pointer"
             title="Sign in as Citizen or Relief Volunteer"
           >
-            <User className="w-4 h-4" />
-            <span className="hidden sm:inline">Sign In</span>
+            <span>Login</span>
           </button>
         )}
 
+        {/* Mobile Navigation Menu Toggle */}
+        <button
+          ref={mobileNavRef}
+          onClick={() => {
+            setSearchOpen(false);
+            setLocationMenuOpen(false);
+            setNotificationsOpen(false);
+            setUserMenuOpen(false);
+            setMobileNavOpen(!mobileNavOpen);
+          }}
+          className="md:hidden p-2 rounded-xl bg-white/[0.04] border border-white/10 text-stone-300 hover:text-white transition-colors cursor-pointer"
+          title="Navigation Menu"
+        >
+          {mobileNavOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+        </button>
+
       </div>
+
+      {/* Mobile Navigation Dropdown for all 9 Tabs */}
+      {mobileNavOpen && (
+        <div 
+          style={{ backgroundColor: '#0B1120' }}
+          className="md:hidden absolute top-full left-0 right-0 border-b border-white/10 p-3 shadow-2xl backdrop-blur-2xl z-50 flex flex-col gap-1 animate-in fade-in slide-in-from-top-2 duration-150"
+        >
+          {TOP_NAV_TABS.map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  onSelectTab && onSelectTab(tab.id);
+                  setMobileNavOpen(false);
+                }}
+                className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs flex items-center justify-between transition-colors cursor-pointer ${
+                  isActive 
+                    ? 'bg-white text-stone-950 font-bold' 
+                    : 'text-stone-300 hover:text-white hover:bg-white/[0.06]'
+                }`}
+              >
+                <span>{tab.label}</span>
+                {tab.hasAlertBadge && (
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                    isActive ? 'bg-rose-500 text-white' : 'bg-rose-500/20 text-rose-300'
+                  }`}>
+                    {liveAlerts?.length > 0 ? liveAlerts.length : 3}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
     </header>
   );
