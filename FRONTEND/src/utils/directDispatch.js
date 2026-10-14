@@ -31,7 +31,7 @@ export function openEmailClient(email, subject, message) {
  */
 export async function sendDirectMessageToContact({ toPhone, toEmail, message, alertTitle = 'Emergency Advisory', channel = 'SMS' }) {
   try {
-    const res = await fetch('http://localhost:5000/api/alerts/send-direct-message', {
+    const res = await fetch('/api/alerts/send-direct-message', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

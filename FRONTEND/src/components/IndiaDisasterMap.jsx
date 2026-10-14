@@ -151,7 +151,7 @@ export default function IndiaDisasterMap({ onSelectAlertZone, onSelectLocation, 
         ...ALL_INDIA_CITIES.map(c => c.city)
       ]));
       const cityNames = hubCities.slice(0, 100).join(',');
-      const res = await fetch(`http://localhost:5000/api/weather/multi?cities=${encodeURIComponent(cityNames)}&fresh=true`);
+      const res = await fetch(`/api/weather/multi?cities=${encodeURIComponent(cityNames)}&fresh=true`);
       
       if (res.ok) {
         const data = await res.json();

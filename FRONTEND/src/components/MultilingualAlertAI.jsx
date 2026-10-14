@@ -565,7 +565,7 @@ export default function MultilingualAlertAI({
       const state = currentLocation.state || 'Odisha';
       const targetLang = langOverride || selectedLang;
 
-      const res = await fetch(`http://localhost:5000/api/alerts/multilingual-generate`, {
+      const res = await fetch(`/api/alerts/multilingual-generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -600,10 +600,7 @@ export default function MultilingualAlertAI({
     try {
       const state = currentLocation?.state || '';
       const endpoint = `/api/alerts/broadcast-logs?limit=10&state=${encodeURIComponent(state)}`;
-      let res = await fetch(endpoint).catch(() => null);
-      if (!res || !res.ok) {
-        res = await fetch(`http://localhost:5000${endpoint}`);
-      }
+      const res = await fetch(endpoint);
       if (res && res.ok) {
         const data = await res.json();
         if (data.broadcasts) {
@@ -791,20 +788,11 @@ export default function MultilingualAlertAI({
         });
       }, 300);
 
-      let res;
-      try {
-        res = await fetch('/api/alerts/broadcast-vernacular', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-      } catch (fErr) {
-        res = await fetch('http://localhost:5000/api/alerts/broadcast-vernacular', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-      }
+      const res = await fetch('/api/alerts/broadcast-vernacular', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
 
       clearInterval(pInterval);
       setBroadcastProgress(100);

@@ -3,7 +3,7 @@ import { POPULAR_INDIAN_HUBS } from '../data/indiaCities';
 import { DRILL_SCENARIOS } from '../components/SimulationDrillBar';
 
 const WeatherContext = createContext(null);
-const API_BASE = 'http://localhost:5000/api/weather';
+const API_BASE = '/api/weather';
 
 // Polling interval (ms) – re-fetch every 60 seconds to ensure fresh real-time data
 const POLL_INTERVAL = 60 * 1000;
@@ -37,7 +37,7 @@ export function WeatherProvider({ children, city, onCityChange }) {
         fetch(`${API_BASE}/forecast?city=${encodeURIComponent(cityName)}${freshParam}`),
         fetch(`${API_BASE}/multi?cities=${encodeURIComponent(hubsList.join(','))}${freshParam}`),
         fetch(`${API_BASE}/live-alerts?city=${encodeURIComponent(cityName)}`),
-        fetch(`http://localhost:5000/api/events?limit=25`).catch(() => fetch(`/api/events?limit=25`))
+        fetch(`/api/events?limit=25`).catch(() => null)
       ]);
 
       if (currentRes.ok) {

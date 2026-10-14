@@ -109,6 +109,62 @@ async function fetchLiveWeatherForCity(cityName) {
   return null;
 }
 
+// Helper to invoke internal Multilingual Alert AI service bound via MULTILINGUAL_AI_URL
+async function callMultilingualAiService(endpoint, body) {
+  const baseUrl = process.env.MULTILINGUAL_AI_URL || 'http://localhost:8000';
+  const cleanBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+  const targetUrl = new URL(cleanEndpoint, cleanBase);
+  const response = await fetch(targetUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    throw new Error(`Multilingual AI service error: ${response.status} ${response.statusText}`);
+  }
+  return await response.json();
+}
+
+// POST /api/alerts/process-ai (Bridge to internal FastAPI /process-alert service via MULTILINGUAL_AI_URL)
+router.post('/alerts/process-ai', async (req, res) => {
+  try {
+    const baseUrl = process.env.MULTILINGUAL_AI_URL || 'http://localhost:8000';
+    const cleanBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+    const targetUrl = new URL('process-alert', cleanBase);
+    const aiRes = await fetch(targetUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req.body),
+    });
+    const data = await aiRes.json();
+    return res.status(aiRes.status).json(data);
+  } catch (err) {
+    console.error('Error invoking Multilingual Alert AI service:', err);
+    return res.status(502).json({
+      error: 'Failed to communicate with Multilingual Alert AI service',
+      details: err.message,
+    });
+  }
+});
+
+// GET /api/alerts/ai-languages (Bridge to internal FastAPI /languages service via MULTILINGUAL_AI_URL)
+router.get('/alerts/ai-languages', async (req, res) => {
+  try {
+    const baseUrl = process.env.MULTILINGUAL_AI_URL || 'http://localhost:8000';
+    const cleanBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+    const targetUrl = new URL('languages', cleanBase);
+    const aiRes = await fetch(targetUrl);
+    const data = await aiRes.json();
+    return res.status(aiRes.status).json(data);
+  } catch (err) {
+    return res.status(502).json({
+      error: 'Failed to communicate with Multilingual Alert AI service',
+      details: err.message,
+    });
+  }
+});
+
 // POST /api/alerts/multilingual-generate (AI-generated vernacular emergency alert)
 router.post('/alerts/multilingual-generate', async (req, res) => {
   try {

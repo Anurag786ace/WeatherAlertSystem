@@ -1,0 +1,39 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "backend": {
+      "root": "BACKEND",
+      "framework": "express",
+      "bindings": [
+        {
+          "type": "service",
+          "service": "multilingual-alert-ai",
+          "format": "url",
+          "env": "MULTILINGUAL_AI_URL"
+        }
+      ]
+    },
+    "frontend": {
+      "root": "FRONTEND",
+      "framework": "vite"
+    },
+    "multilingual-alert-ai": {
+      "root": "multilingual-alert-ai/multilingual-alert-ai",
+      "framework": "fastapi"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": {
+        "service": "backend"
+      }
+    },
+    {
+      "source": "/(.*)",
+      "destination": {
+        "service": "frontend"
+      }
+    }
+  ]
+}

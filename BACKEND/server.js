@@ -91,15 +91,19 @@ mongoose.connect(MONGODB_URI, {
 });
 
 // Start Express Server
-app.listen(PORT, () => {
-  console.log(`====================================================`);
-  console.log(`🚨 LASTMILE ALERT SYSTEM BACKEND RUNNING ON PORT ${PORT}`);
-  console.log(`📡 API Health:    http://localhost:${PORT}/api/health`);
-  console.log(`📋 Presets:       http://localhost:${PORT}/api/presets`);
-  console.log(`🛰️ NASA EONET:   http://localhost:${PORT}/api/events`);
-  console.log(`🔐 Auth Register: http://localhost:${PORT}/api/auth/register`);
-  console.log(`🔑 Auth Login:    http://localhost:${PORT}/api/auth/login`);
-  console.log(`👥 Auth Users:    http://localhost:${PORT}/api/auth/users`);
-  console.log(`💾 MongoDB URI:   ${MONGODB_URI}`);
-  console.log(`====================================================`);
-});
+if (require.main === module || !process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`====================================================`);
+    console.log(`🚨 LASTMILE ALERT SYSTEM BACKEND RUNNING ON PORT ${PORT}`);
+    console.log(`📡 API Health:    http://localhost:${PORT}/api/health`);
+    console.log(`📋 Presets:       http://localhost:${PORT}/api/presets`);
+    console.log(`🛰️ NASA EONET:   http://localhost:${PORT}/api/events`);
+    console.log(`🔐 Auth Register: http://localhost:${PORT}/api/auth/register`);
+    console.log(`🔑 Auth Login:    http://localhost:${PORT}/api/auth/login`);
+    console.log(`👥 Auth Users:    http://localhost:${PORT}/api/auth/users`);
+    console.log(`💾 MongoDB URI:   ${MONGODB_URI}`);
+    console.log(`====================================================`);
+  });
+}
+
+module.exports = app;

@@ -168,7 +168,7 @@ export default function TopNavbar({
     const timer = setTimeout(async () => {
       try {
         setIsSearchingOnline(true);
-        const res = await fetch(`http://localhost:5000/api/weather/search?q=${encodeURIComponent(q)}`);
+        const res = await fetch(`/api/weather/search?q=${encodeURIComponent(q)}`);
         if (res.ok) {
           const data = await res.json();
           if (data.success && Array.isArray(data.locations)) {
@@ -224,7 +224,7 @@ export default function TopNavbar({
         const lat = pos.coords.latitude;
         const lon = pos.coords.longitude;
         try {
-          const res = await fetch(`http://localhost:5000/api/weather/reverse?lat=${lat}&lon=${lon}`);
+          const res = await fetch(`/api/weather/reverse?lat=${lat}&lon=${lon}`);
           if (res.ok) {
             const data = await res.json();
             onSelectLocation({
