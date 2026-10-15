@@ -1,9 +1,5 @@
-// Service to interact with Pexels API for dynamic atmospheric weather & storm wallpapers
-
-const PEXELS_API_KEY = 
-  import.meta.env.VITE_PEXELS_API || 
-  import.meta.env.PEXELS_API || 
-  '';
+// Service to interact with Pexels API via secure backend proxy (/api/wallpapers)
+// The Pexels API key is safely stored on the server and never exposed to client browsers.
 
 // Curated search themes reflecting emergency weather, cyclones, thunderstorms, and dramatic atmospheric skies
 export const PEXELS_WEATHER_QUERIES = [
@@ -62,68 +58,50 @@ export function formatPexelsWallpaper(photo) {
 }
 
 /**
- * Fetch a fresh, random atmospheric wallpaper from Pexels API
+ * Fetch a fresh, random atmospheric wallpaper via secure backend proxy
  */
 export async function fetchRandomPexelsWallpaper(customQuery = null) {
-  if (!PEXELS_API_KEY) {
-    console.warn('Pexels API key not configured.');
-    return getCachedFallbackWallpaper();
-  }
-
   try {
-    const query = customQuery || PEXELS_WEATHER_QUERIES[Math.floor(Math.random() * PEXELS_WEATHER_QUERIES.length)];
-    const page = Math.floor(Math.random() * 6) + 1; // Random page 1-6 for immense variety
-
-    const url = `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&orientation=landscape&per_page=15&page=${page}`;
-    const res = await fetch(url, {
-      headers: {
-        Authorization: PEXELS_API_KEY
-      }
-    });
+    const queryParam = customQuery ? `?query=${encodeURIComponent(customQuery)}` : '';
+    const res = await fetch(`/api/wallpapers/random${queryParam}`);
 
     if (!res.ok) {
-      console.warn('Pexels API responded with status:', res.status);
+      console.warn('Backend wallpaper proxy responded with status:', res.status);
       return getCachedFallbackWallpaper();
     }
 
     const data = await res.json();
-    if (!data.photos || data.photos.length === 0) {
+    if (!data.success || !data.photo) {
       return getCachedFallbackWallpaper();
     }
 
-    // Pick a random photo from the 15 fetched
-    const chosenRaw = data.photos[Math.floor(Math.random() * data.photos.length)];
-    const chosenWallpaper = formatPexelsWallpaper(chosenRaw);
+    const chosenWallpaper = formatPexelsWallpaper(data.photo);
 
     // Save into cache pool for offline / instant load fallback
-    cachePexelsPhotos(data.photos);
+    if (data.photosPool && data.photosPool.length > 0) {
+      cachePexelsPhotos(data.photosPool);
+    }
 
-    return chosenWallpaper;
+    return chosenWallpaper || getCachedFallbackWallpaper();
   } catch (err) {
-    console.warn('Failed to fetch from Pexels API:', err.message);
+    console.warn('Failed to fetch wallpaper from backend proxy:', err.message);
     return getCachedFallbackWallpaper();
   }
 }
 
 /**
- * Fetch a list of wallpapers from Pexels for gallery view in WallpaperSelector
+ * Fetch a list of wallpapers via backend proxy for gallery view in WallpaperSelector
  */
 export async function fetchPexelsWallpapersList(query = 'storm clouds', perPage = 8) {
-  if (!PEXELS_API_KEY) return [];
-
   try {
-    const url = `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&orientation=landscape&per_page=${perPage}`;
-    const res = await fetch(url, {
-      headers: {
-        Authorization: PEXELS_API_KEY
-      }
-    });
+    const url = `/api/wallpapers/search?query=${encodeURIComponent(query)}&per_page=${perPage}`;
+    const res = await fetch(url);
 
     if (!res.ok) return [];
     const data = await res.json();
     return (data.photos || []).map(formatPexelsWallpaper).filter(Boolean);
   } catch (err) {
-    console.warn('Pexels list fetch error:', err.message);
+    console.warn('Wallpaper list fetch error:', err.message);
     return [];
   }
 }

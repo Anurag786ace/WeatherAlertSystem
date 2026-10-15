@@ -6,6 +6,7 @@ require('dotenv').config();
 const alertRoutes = require('./routes/alertRoutes');
 const authRoutes = require('./routes/authRoutes');
 const weatherRoutes = require('./routes/weatherRoutes');
+const wallpaperRoutes = require('./routes/wallpaperRoutes');
 const User = require('./models/User');
 
 const app = express();
@@ -24,6 +25,7 @@ app.use(express.json());
 app.use('/api', alertRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/weather', weatherRoutes);
+app.use('/api/wallpapers', wallpaperRoutes);
 
 // Seed initial demonstration users into MongoDB if empty
 async function seedDemoUsers() {
