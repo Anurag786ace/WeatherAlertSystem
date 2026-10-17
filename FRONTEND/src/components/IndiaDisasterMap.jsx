@@ -267,53 +267,57 @@ export default function IndiaDisasterMap({ onSelectAlertZone, onSelectLocation, 
     if (!mapContainerRef.current) return;
     if (mapRef.current) return;
 
-    const map = new mapboxgl.Map({
-      container: mapContainerRef.current,
-      style: 'mapbox://styles/mapbox/dark-v11',
-      center: [79.2, 22.4],
-      zoom: 4.1,
-      minZoom: 3.5,
-      maxZoom: 12,
-      projection: 'mercator',
-      attributionControl: false
-    });
-
-    map.addControl(new mapboxgl.NavigationControl({ showCompass: true }), 'top-right');
-
-    map.on('load', () => {
-      // Add empty hazard source — will be updated dynamically
-      map.addSource('hazard-zones', {
-        type: 'geojson',
-        data: { type: 'FeatureCollection', features: [] }
+    try {
+      const map = new mapboxgl.Map({
+        container: mapContainerRef.current,
+        style: 'mapbox://styles/mapbox/dark-v11',
+        center: [79.2, 22.4],
+        zoom: 4.1,
+        minZoom: 3.5,
+        maxZoom: 12,
+        projection: 'mercator',
+        attributionControl: false
       });
 
-      map.addLayer({
-        id: 'hazard-zones-fill',
-        type: 'fill',
-        source: 'hazard-zones',
-        paint: {
-          'fill-color': ['get', 'color'],
-          'fill-opacity': 0.22
-        }
-      });
+      map.addControl(new mapboxgl.NavigationControl({ showCompass: true }), 'top-right');
 
-      // Interactive click on hazard zones
-      map.on('click', 'hazard-zones-fill', (e) => {
-        if (e.features && e.features[0]) {
-          const props = e.features[0].properties;
-          setSelectedHazardInfo(props);
-          if (onSelectAlertZone) {
-            onSelectAlertZone(props);
+      map.on('load', () => {
+        // Add empty hazard source — will be updated dynamically
+        map.addSource('hazard-zones', {
+          type: 'geojson',
+          data: { type: 'FeatureCollection', features: [] }
+        });
+
+        map.addLayer({
+          id: 'hazard-zones-fill',
+          type: 'fill',
+          source: 'hazard-zones',
+          paint: {
+            'fill-color': ['get', 'color'],
+            'fill-opacity': 0.22
           }
-        }
+        });
+
+        // Interactive click on hazard zones
+        map.on('click', 'hazard-zones-fill', (e) => {
+          if (e.features && e.features[0]) {
+            const props = e.features[0].properties;
+            setSelectedHazardInfo(props);
+            if (onSelectAlertZone) {
+              onSelectAlertZone(props);
+            }
+          }
+        });
+
+        map.on('mouseenter', 'hazard-zones-fill', () => { map.getCanvas().style.cursor = 'pointer'; });
+        map.on('mouseleave', 'hazard-zones-fill', () => { map.getCanvas().style.cursor = ''; });
+
+        mapRef.current = map;
+        setMapLoaded(true);
       });
-
-      map.on('mouseenter', 'hazard-zones-fill', () => { map.getCanvas().style.cursor = 'pointer'; });
-      map.on('mouseleave', 'hazard-zones-fill', () => { map.getCanvas().style.cursor = ''; });
-
-      mapRef.current = map;
-      setMapLoaded(true);
-    });
+    } catch (err) {
+      console.warn('Mapbox initialization failed:', err.message);
+    }
 
     return () => {
       if (mapRef.current) {
